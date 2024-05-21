@@ -1,5 +1,15 @@
 import { fromEvent, Observable, combineLatest } from "rxjs";
 import { map, startWith } from "rxjs/operators";
+import {
+  Chart,
+  ChartConfiguration,
+  ScatterController,
+  Title,
+  PointElement,
+  LineElement,
+  LinearScale,
+  CategoryScale,
+} from "chart.js";
 
 // Get the output element
 const outputElement: HTMLElement = document.getElementById(
@@ -85,7 +95,63 @@ const wealths$: Observable<Array<number>> = combineLatest([
   }),
 );
 
-// Subscribe to the future value stream and update the output element
+Chart.register(
+  ScatterController,
+  Title,
+  PointElement,
+  LineElement,
+  LinearScale,
+  CategoryScale,
+);
+
+// Define your data
+const data = {
+  datasets: [
+    {
+      label: "Scatter Dataset",
+      data: [
+        {
+          x: -10,
+          y: 0,
+        },
+        {
+          x: 0,
+          y: 10,
+        },
+        {
+          x: 10,
+          y: 5,
+        },
+      ],
+      showLine: true, // Enable line on scatter
+    },
+  ],
+};
+
+// Configuration options
+const config: ChartConfiguration<"scatter", { x: number; y: number }[]> = {
+  type: "scatter",
+  data: data,
+  options: {
+    animation: false,
+    responsive: true,
+    scales: {
+      x: {
+        type: "linear",
+        position: "bottom",
+      },
+    },
+  },
+};
+
+// Create the chart
+const context = (
+  document.getElementById("output_canvas") as HTMLCanvasElement
+).getContext("2d");
+const chart = new Chart(context, config);
+
 wealths$.subscribe((wealths) => {
-  outputElement.innerHTML = `Future value of investment: ${wealths}`;
+  const points = wealths.map((value, index) => ({ x: index, y: value }));
+  data.datasets[0].data = points;
+  chart.update();
 });
