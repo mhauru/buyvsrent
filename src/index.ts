@@ -1,78 +1,91 @@
 import { fromEvent, Observable, combineLatest } from "rxjs";
-import { map } from "rxjs/operators";
-
-// Get the input elements
-const houseValue0Input: HTMLInputElement = document.getElementById(
-  "house_value_0",
-) as HTMLInputElement;
-const cash0Input: HTMLInputElement = document.getElementById(
-  "cash_0",
-) as HTMLInputElement;
-const interestRateInput: HTMLInputElement = document.getElementById(
-  "interest_rate",
-) as HTMLInputElement;
-const houseApprecationRateInput: HTMLInputElement = document.getElementById(
-  "house_appreciation_rate",
-) as HTMLInputElement;
-const yearsToForecastInput: HTMLInputElement = document.getElementById(
-  "years_to_forecast",
-) as HTMLInputElement;
+import { map, startWith } from "rxjs/operators";
 
 // Get the output element
 const outputElement: HTMLElement = document.getElementById(
   "output",
 ) as HTMLElement;
 
+function makeNumberObservable(inputElementName: string): Observable<number> {
+  const input: HTMLInputElement = document.getElementById(
+    inputElementName,
+  ) as HTMLInputElement;
+  const observable: Observable<number> = fromEvent(input, "input").pipe(
+    map((event) => parseFloat((event.target as HTMLInputElement).value)),
+    startWith(parseFloat(input.value)),
+  );
+  return observable;
+}
 // Create streams from the input elements
-const houseValue0$: Observable<number> = fromEvent(
-  houseValue0Input,
-  "input",
-).pipe(map((event) => parseFloat((event.target as HTMLInputElement).value)));
-const cash0$: Observable<number> = fromEvent(cash0Input, "input").pipe(
-  map((event) => parseFloat((event.target as HTMLInputElement).value)),
+const houseValue0$ = makeNumberObservable("house_value_0");
+const cash0$ = makeNumberObservable("cash_0");
+const mortgageMonthlyPayment$ = makeNumberObservable(
+  "mortgage_monthly_payment",
 );
-const interestRate$: Observable<number> = fromEvent(
-  interestRateInput,
-  "input",
-).pipe(map((event) => parseFloat((event.target as HTMLInputElement).value)));
-const houseApprecationRate$: Observable<number> = fromEvent(
-  houseApprecationRateInput,
-  "input",
-).pipe(map((event) => parseFloat((event.target as HTMLInputElement).value)));
-const yearsToForecast$: Observable<number> = fromEvent(
-  yearsInput,
-  "input",
-).pipe(map((event) => parseFloat((event.target as HTMLInputElement).value)));
+const mortgageInterestRate$ = makeNumberObservable("mortgage_interest_rate");
+const houseAppreciationRate$ = makeNumberObservable("house_appreciation_rate");
+const yearsToForecast$ = makeNumberObservable("years_to_forecast");
 
-// Combine the input streams and calculate the future value
-const futureValue$: Observable<number> = combineLatest([
+const mortgage0$ = combineLatest([houseValue0$, cash0$]).pipe(
+  map(([houseValue0, cash0]: Array<number>) => {
+    return houseValue0 - cash0;
+  }),
+);
+
+const houseValues$ = combineLatest([
   houseValue0$,
-  cash0$,
-  interestRate$,
-  houseApprecationRate$,
+  houseAppreciationRate$,
+  yearsToForecast$,
+]).pipe(
+  map(([houseValue0, houseAppreciationRate, yearsToForecast]) => {
+    let houseValues = [houseValue0];
+    for (let i = 1; i <= yearsToForecast; i++) {
+      houseValues.push(
+        houseValues[houseValues.length - 1] * houseAppreciationRate,
+      );
+    }
+    return houseValues;
+  }),
+);
+
+const mortgages$ = combineLatest([
+  mortgage0$,
+  mortgageInterestRate$,
+  mortgageMonthlyPayment$,
   yearsToForecast$,
 ]).pipe(
   map(
     ([
-      houseValue0,
-      cash0,
-      interestRate,
-      houseApprecationRate,
+      mortgage0,
+      mortgageInterestRate,
+      mortgageMonthlyPayment,
       yearsToForecast,
-    ]) => {
-      // This is a very simple calculation and might not accurately represent the future value of the investment
-      // Replace with your own calculation as needed
-      const years: number = 5; // For example, calculate the future value after 5 years
-      const futureValueOfHouse: number =
-        houseValue0 * Math.pow(1 + houseApprecationRate / 100, years);
-      const futureValueOfCash: number =
-        cash0 * Math.pow(1 + interestRate / 100, years);
-      return futureValueOfHouse + futureValueOfCash;
+    ]: Array<number>) => {
+      let mortgages = [mortgage0];
+      let currentBalance = mortgage0;
+      for (let i = 1; i <= yearsToForecast; i++) {
+        const interest = (currentBalance * mortgageInterestRate) / 100; // Assuming the rate is annual
+        currentBalance =
+          currentBalance + interest - mortgageMonthlyPayment * 12;
+        currentBalance = currentBalance > 0 ? currentBalance : 0; // If the balance goes negative, set it to 0
+        mortgages.push(currentBalance);
+      }
+      return mortgages;
     },
   ),
 );
 
+// Combine the input streams and calculate the future value
+const wealths$: Observable<Array<number>> = combineLatest([
+  houseValues$,
+  mortgages$,
+]).pipe(
+  map(([houseValues, mortgages]: Array<Array<number>>) => {
+    return houseValues.map((item, index) => item - mortgages[index]);
+  }),
+);
+
 // Subscribe to the future value stream and update the output element
-futureValue$.subscribe((futureValue) => {
-  outputElement.innerHTML = `Future value of investment: ${futureValue.toFixed(2)}`;
+wealths$.subscribe((wealths) => {
+  outputElement.innerHTML = `Future value of investment: ${wealths}`;
 });
