@@ -11,7 +11,6 @@ import {
   CategoryScale,
 } from "chart.js";
 
-// Get the output element
 const outputElement: HTMLElement = document.getElementById(
   "output",
 ) as HTMLElement;
@@ -42,57 +41,96 @@ const mortgage0$ = combineLatest([houseValue0$, cash0$]).pipe(
   }),
 );
 
-const houseValues$ = combineLatest([
+interface AnnualSummary {
+  houseValue: number;
+  cashValue: number;
+  otherInvestmentValue: number;
+  mortgageBalance: number;
+  yearNumber: number;
+  moneySpent: number;
+}
+
+const summary0$: Observable<AnnualSummary> = combineLatest([
   houseValue0$,
-  houseAppreciationRate$,
-  yearsToForecast$,
+  mortgage0$,
 ]).pipe(
-  map(([houseValue0, houseAppreciationRate, yearsToForecast]) => {
-    let houseValues = [houseValue0];
-    for (let i = 1; i <= yearsToForecast; i++) {
-      houseValues.push(
-        houseValues[houseValues.length - 1] *
-          (1 + houseAppreciationRate / 100.0),
-      );
-    }
-    return houseValues;
+  map(([houseValue0, mortgage0]: Array<number>) => {
+    return {
+      houseValue: houseValue0,
+      cashValue: 0,
+      otherInvestmentValue: 0,
+      mortgageBalance: mortgage0,
+      yearNumber: 0,
+      moneySpent: 0,
+    };
   }),
 );
 
-const mortgages$ = combineLatest([
-  mortgage0$,
+function getNextSummary(
+  summary: AnnualSummary,
+  houseAppreciationRate: number,
+  mortgageInterestRate: number,
+  mortgageMonthlyPayment: number,
+): AnnualSummary {
+  const newHouseValue =
+    summary.houseValue * (1 + houseAppreciationRate / 100.0);
+  const interest = (summary.mortgageBalance * mortgageInterestRate) / 100.0;
+  let newMortgageBalance =
+    summary.mortgageBalance + interest - mortgageMonthlyPayment * 12;
+  let cashSaved = 0.0;
+  if (newMortgageBalance < 0) {
+    cashSaved = -newMortgageBalance;
+    newMortgageBalance = 0;
+  }
+  return {
+    houseValue: newHouseValue,
+    cashValue: summary.cashValue + cashSaved,
+    otherInvestmentValue: summary.otherInvestmentValue,
+    mortgageBalance: newMortgageBalance,
+    yearNumber: summary.yearNumber + 1,
+    moneySpent: summary.moneySpent + interest,
+  };
+}
+
+const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
+  summary0$,
+  houseAppreciationRate$,
   mortgageInterestRate$,
   mortgageMonthlyPayment$,
   yearsToForecast$,
 ]).pipe(
   map(
     ([
-      mortgage0,
+      summary0,
+      houseAppreciationRate,
       mortgageInterestRate,
       mortgageMonthlyPayment,
       yearsToForecast,
-    ]: Array<number>) => {
-      let mortgages = [mortgage0];
-      let currentBalance = mortgage0;
+    ]) => {
+      const summaries = [summary0];
+      let lastSummary = summary0;
+
       for (let i = 1; i <= yearsToForecast; i++) {
-        const interest = (currentBalance * mortgageInterestRate) / 100.0;
-        currentBalance =
-          currentBalance + interest - mortgageMonthlyPayment * 12;
-        currentBalance = currentBalance > 0 ? currentBalance : 0;
-        mortgages.push(currentBalance);
+        const nextSummary = getNextSummary(
+          lastSummary,
+          houseAppreciationRate,
+          mortgageInterestRate,
+          mortgageMonthlyPayment,
+        );
+        summaries.push(nextSummary);
+        lastSummary = nextSummary;
       }
-      return mortgages;
+      return summaries;
     },
   ),
 );
 
-// Combine the input streams and calculate the future value
-const wealths$: Observable<Array<number>> = combineLatest([
-  houseValues$,
-  mortgages$,
-]).pipe(
-  map(([houseValues, mortgages]: Array<Array<number>>) => {
-    return houseValues.map((item, index) => item - mortgages[index]);
+const wealths$: Observable<Array<number>> = summaries$.pipe(
+  map((summaries: Array<AnnualSummary>) => {
+    return summaries.map(
+      (s, _) =>
+        s.houseValue + s.cashValue + s.otherInvestmentValue - s.mortgageBalance,
+    );
   }),
 );
 
@@ -105,31 +143,16 @@ Chart.register(
   CategoryScale,
 );
 
-// Define your data
 const data = {
   datasets: [
     {
       label: "Scatter Dataset",
-      data: [
-        {
-          x: -10,
-          y: 0,
-        },
-        {
-          x: 0,
-          y: 10,
-        },
-        {
-          x: 10,
-          y: 5,
-        },
-      ],
-      showLine: true, // Enable line on scatter
+      data: [],
+      showLine: true,
     },
   ],
 };
 
-// Configuration options
 const config: ChartConfiguration<"scatter", { x: number; y: number }[]> = {
   type: "scatter",
   data: data,
@@ -145,7 +168,6 @@ const config: ChartConfiguration<"scatter", { x: number; y: number }[]> = {
   },
 };
 
-// Create the chart
 const context = (
   document.getElementById("output_canvas") as HTMLCanvasElement
 ).getContext("2d");
