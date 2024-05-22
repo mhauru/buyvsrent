@@ -4,6 +4,8 @@ import {
   Chart,
   ChartConfiguration,
   ScatterController,
+  Legend,
+  Colors,
   Title,
   PointElement,
   LineElement,
@@ -125,37 +127,75 @@ const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
   ),
 );
 
-const wealths$: Observable<Array<number>> = summaries$.pipe(
+interface PlotPoint {
+  x: number;
+  y: number;
+}
+interface Dataset {
+  label: string;
+  data: Array<PlotPoint>;
+  showLine: boolean;
+}
+const datasets$: Observable<Array<Dataset>> = summaries$.pipe(
   map((summaries: Array<AnnualSummary>) => {
-    return summaries.map(
-      (s, _) =>
-        s.houseValue + s.cashValue + s.otherInvestmentValue - s.mortgageBalance,
-    );
+    const wealths = summaries.map((s, i) => {
+      return {
+        x: i,
+        y:
+          s.houseValue +
+          s.cashValue +
+          s.otherInvestmentValue -
+          s.mortgageBalance,
+      };
+    });
+    const mortgageBalances = summaries.map((s, i) => {
+      return { x: i, y: s.mortgageBalance };
+    });
+    const cashValues = summaries.map((s, i) => {
+      return { x: i, y: s.cashValue };
+    });
+    const houseValues = summaries.map((s, i) => {
+      return { x: i, y: s.houseValue };
+    });
+    return [
+      {
+        label: "Total wealth",
+        data: wealths,
+        showLine: true,
+      },
+      {
+        label: "House value",
+        data: houseValues,
+        showLine: true,
+      },
+      {
+        label: "Cash",
+        data: cashValues,
+        showLine: true,
+      },
+      {
+        label: "Mortgage",
+        data: mortgageBalances,
+        showLine: true,
+      },
+    ];
   }),
 );
 
 Chart.register(
   ScatterController,
   Title,
+  Legend,
+  Colors,
   PointElement,
   LineElement,
   LinearScale,
   CategoryScale,
 );
 
-const data = {
-  datasets: [
-    {
-      label: "Scatter Dataset",
-      data: [],
-      showLine: true,
-    },
-  ],
-};
-
 const config: ChartConfiguration<"scatter", { x: number; y: number }[]> = {
   type: "scatter",
-  data: data,
+  data: { datasets: [] },
   options: {
     animation: false,
     responsive: true,
@@ -163,6 +203,21 @@ const config: ChartConfiguration<"scatter", { x: number; y: number }[]> = {
       x: {
         type: "linear",
         position: "bottom",
+      },
+    },
+    plugins: {
+      colors: {
+        enabled: true,
+      },
+      legend: {
+        display: true, // This is true by default
+        position: "top", // Position of the legend (top, left, bottom, right)
+        labels: {
+          font: {
+            size: 14, // Font size for legend labels
+          },
+          color: "rgb(0, 0, 0)", // Font color for legend labels
+        },
       },
     },
   },
@@ -173,8 +228,7 @@ const context = (
 ).getContext("2d");
 const chart = new Chart(context, config);
 
-wealths$.subscribe((wealths) => {
-  const points = wealths.map((value, index) => ({ x: index, y: value }));
-  data.datasets[0].data = points;
+datasets$.subscribe((datasets) => {
+  config.data.datasets = datasets;
   chart.update();
 });
