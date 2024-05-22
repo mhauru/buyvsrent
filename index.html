@@ -7,36 +7,36 @@
   <body>
       <p>
       <label for="house_value_0">House value at purchase</label>
-      <input id="house_value_0" type="number">
+      <input id="house_value_0" type="number" value="500000" step="1000">
       </p>
 
       <p>
       <label for="cash_0">Cash at purchase</label>
-      <input id="cash_0" type="number">
+      <input id="cash_0" type="number" value="250000" step="1000">
       </p>
 
       <p>
       <label for="mortgage_interest_rate">Mortgage interest rate</label>
-      <input id="mortgage_interest_rate" type="number">
+      <input id="mortgage_interest_rate" type="number" value="5" step="0.1">
       </p>
 
       <p>
       <label for="mortgage_monthly_payment">Mortgage monthly payment</label>
-      <input id="mortgage_monthly_payment" type="number">
+      <input id="mortgage_monthly_payment" type="number" value="2000" step="100">
       </p>
 
       <p>
       <label for="house_appreciation_rate">Annual house price appreciation</label>
-      <input id="house_appreciation_rate" type="number">
+      <input id="house_appreciation_rate" type="number" value="3" step="0.1">
       </p>
 
       <p>
       <label for="years_to_forecast">Years to forecast</label>
-      <input id="years_to_forecast" type="number">
+      <input id="years_to_forecast" type="number" value="25" step="1">
       </p>
 
       <div id="output">
-          <canvas id="output_canvas">
+          <canvas style="max-width: 80em; max-height: 40em;" id="output_canvas">
       </div>
   </body>
   <script src="./dist/main.js"></script>

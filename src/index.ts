@@ -51,7 +51,8 @@ const houseValues$ = combineLatest([
     let houseValues = [houseValue0];
     for (let i = 1; i <= yearsToForecast; i++) {
       houseValues.push(
-        houseValues[houseValues.length - 1] * houseAppreciationRate,
+        houseValues[houseValues.length - 1] *
+          (1 + houseAppreciationRate / 100.0),
       );
     }
     return houseValues;
@@ -74,10 +75,10 @@ const mortgages$ = combineLatest([
       let mortgages = [mortgage0];
       let currentBalance = mortgage0;
       for (let i = 1; i <= yearsToForecast; i++) {
-        const interest = (currentBalance * mortgageInterestRate) / 100; // Assuming the rate is annual
+        const interest = (currentBalance * mortgageInterestRate) / 100.0;
         currentBalance =
           currentBalance + interest - mortgageMonthlyPayment * 12;
-        currentBalance = currentBalance > 0 ? currentBalance : 0; // If the balance goes negative, set it to 0
+        currentBalance = currentBalance > 0 ? currentBalance : 0;
         mortgages.push(currentBalance);
       }
       return mortgages;
