@@ -47,6 +47,7 @@ const createLabelElement = (forId: string, text: string): HTMLLabelElement => {
   const label = document.createElement("label");
   label.htmlFor = forId;
   label.innerText = text;
+  label.classList.add("input-label");
   return label;
 };
 
@@ -62,6 +63,7 @@ const createInputElement = (
   input.type = type;
   input.value = value.toString();
   input.step = step.toString();
+  input.classList.add("input-field");
   return input;
 };
 
@@ -70,27 +72,29 @@ const createParagraphElement = (
   input: HTMLInputElement,
 ): HTMLParagraphElement => {
   const p = document.createElement("p");
-  p.appendChild(input);
   p.appendChild(label);
+  p.appendChild(input);
+  p.classList.add("input-group");
   return p;
 };
 
-const createDivElement = (id: string, idSuffix: number): HTMLDivElement => {
+const createCanvasDivElement = (
+  id: string,
+  idSuffix: number,
+): HTMLDivElement => {
   const div = document.createElement("div");
   div.id = `${id}_${idSuffix}`;
+  div.classList.add("canvas-container");
   return div;
 };
 
 const createCanvasElement = (
   id: string,
   idSuffix: number,
-  styles: { [key: string]: string },
 ): HTMLCanvasElement => {
   const canvas = document.createElement("canvas");
   canvas.id = `${id}_${idSuffix}`;
-  for (const [key, value] of Object.entries(styles)) {
-    canvas.style.setProperty(key, value);
-  }
+  canvas.classList.add("output-canvas");
   return canvas;
 };
 
@@ -180,15 +184,11 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
     50,
   );
 
-  const canvasDiv = createDivElement("canvas_div", idSuffix);
-  const canvas = createCanvasElement("canvas", idSuffix, {
-    "max-width": "80em",
-    "max-height": "40em",
-  });
+  const canvasDiv = createCanvasDivElement("canvas_div", idSuffix);
+  const canvas = createCanvasElement("canvas", idSuffix);
   canvasDiv.appendChild(canvas);
 
   const elements = [
-    canvasDiv,
     createParagraphElement(
       createLabelElement(houseValue.id, "House value at purchase"),
       houseValue,
@@ -254,8 +254,15 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
     ),
   ];
 
+  const inputsDiv = document.createElement("div");
+  inputsDiv.classList.add("inputs-div");
+  elements.forEach((element) => inputsDiv.appendChild(element));
+
   const wrapperDiv = document.createElement("div");
-  elements.forEach((element) => wrapperDiv.appendChild(element));
+  wrapperDiv.classList.add("property-wrapper");
+  wrapperDiv.appendChild(canvasDiv);
+  wrapperDiv.appendChild(inputsDiv);
+
   document.body.appendChild(wrapperDiv);
 
   return {
@@ -577,3 +584,4 @@ function makeScenario(idNumber: number) {
 }
 
 makeScenario(1);
+makeScenario(2);

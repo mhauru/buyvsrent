@@ -1,0 +1,53 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.property-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1em;
+  border: 1px solid #ddd;
+  margin: 1em;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  flex: 1; /* This makes each .property-wrapper take an equal share of the available space */
+  min-width: 300px; /* Ensures the boxes don't get too small */
+}
+
+.input-group {
+  display: grid;
+  /* grid-template-columns: 1fr 1fr; */
+  column-gap: 1em;
+  row-gap: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.input-label {
+  align-self: center; /* Vertically center the label */
+  font-weight: bold;
+}
+
+.input-field {
+  padding: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.canvas-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1em;
+}
+
+.output-canvas {
+  max-width: 80em;
+  max-height: 40em;
+  width: 100%;
+}
