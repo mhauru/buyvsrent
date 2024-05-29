@@ -43,135 +43,152 @@ interface PropertyInputs {
   canvas: HTMLCanvasElement;
 }
 
+const createLabelElement = (forId: string, text: string): HTMLLabelElement => {
+  const label = document.createElement("label");
+  label.htmlFor = forId;
+  label.innerText = text;
+  return label;
+};
+
+const createInputElement = (
+  id: string,
+  idSuffix: number,
+  type: string,
+  value: string | number,
+  step: string | number,
+): HTMLInputElement => {
+  const input = document.createElement("input");
+  input.id = `${id}_${idSuffix}`;
+  input.type = type;
+  input.value = value.toString();
+  input.step = step.toString();
+  return input;
+};
+
+const createParagraphElement = (
+  label: HTMLLabelElement,
+  input: HTMLInputElement,
+): HTMLParagraphElement => {
+  const p = document.createElement("p");
+  p.appendChild(input);
+  p.appendChild(label);
+  return p;
+};
+
+const createDivElement = (id: string, idSuffix: number): HTMLDivElement => {
+  const div = document.createElement("div");
+  div.id = `${id}_${idSuffix}`;
+  return div;
+};
+
+const createCanvasElement = (
+  id: string,
+  idSuffix: number,
+  styles: { [key: string]: string },
+): HTMLCanvasElement => {
+  const canvas = document.createElement("canvas");
+  canvas.id = `${id}_${idSuffix}`;
+  for (const [key, value] of Object.entries(styles)) {
+    canvas.style.setProperty(key, value);
+  }
+  return canvas;
+};
+
 function createPropertyInputs(idSuffix: number): PropertyInputs {
-  const createInputElement = (
-    id: string,
-    type: string,
-    value: string | number,
-    step: string | number,
-  ): HTMLInputElement => {
-    const input = document.createElement("input");
-    input.id = `${id}_${idSuffix}`;
-    input.type = type;
-    input.value = value.toString();
-    input.step = step.toString();
-    return input;
-  };
-
-  const createLabelElement = (
-    forId: string,
-    text: string,
-  ): HTMLLabelElement => {
-    const label = document.createElement("label");
-    label.htmlFor = forId;
-    label.innerText = text;
-    return label;
-  };
-
-  const createParagraphElement = (
-    label: HTMLLabelElement,
-    input: HTMLInputElement,
-  ): HTMLParagraphElement => {
-    const p = document.createElement("p");
-    p.appendChild(label);
-    p.appendChild(input);
-    return p;
-  };
-
-  const createDivElement = (id: string): HTMLDivElement => {
-    const div = document.createElement("div");
-    div.id = `${id}_${idSuffix}`;
-    return div;
-  };
-
-  const createCanvasElement = (
-    id: string,
-    styles: { [key: string]: string },
-  ): HTMLCanvasElement => {
-    const canvas = document.createElement("canvas");
-    canvas.id = `${id}_${idSuffix}`;
-    for (const [key, value] of Object.entries(styles)) {
-      canvas.style.setProperty(key, value);
-    }
-    return canvas;
-  };
-
   const houseValue = createInputElement(
     "house_value",
+    idSuffix,
     "number",
     DEFAULT_HOUSE_VALUE,
     1000,
   );
-  const cash = createInputElement("cash", "number", DEFAULT_CASH, 1000);
+  const cash = createInputElement(
+    "cash",
+    idSuffix,
+    "number",
+    DEFAULT_CASH,
+    1000,
+  );
   const mortgageInterestRate = createInputElement(
     "mortgage_interest_rate",
+    idSuffix,
     "number",
     DEFAULT_MORTGAGE_INTEREST_RATE,
     0.1,
   );
   const mortgageMonthlyPayment = createInputElement(
     "mortgage_monthly_payment",
+    idSuffix,
     "number",
     DEFAULT_MORTGAGE_MONTHLY_PAYMENT,
     100,
   );
   const houseAppreciationRate = createInputElement(
     "house_appreciation_rate",
+    idSuffix,
     "number",
     DEFAULT_HOUSE_APPRECIATION_RATE,
     0.1,
   );
   const yearsToForecast = createInputElement(
     "years_to_forecast",
+    idSuffix,
     "number",
     DEFAULT_YEARS_TO_FORECAST,
     1,
   );
   const buyingCosts = createInputElement(
     "buying_costs",
+    idSuffix,
     "number",
     DEFAULT_BUYING_COSTS,
     100,
   );
   const firstTimeBuyer = createInputElement(
     "first_time_buyer",
+    idSuffix,
     "checkbox",
     DEFAULT_FIRST_TIME_BUYER ? "true" : "false",
     "",
   );
   const groundRent = createInputElement(
     "ground_rent",
+    idSuffix,
     "number",
     DEFAULT_GROUND_RENT,
     50,
   );
   const serviceCharge = createInputElement(
     "service_charge",
+    idSuffix,
     "number",
     DEFAULT_SERVICE_CHARGE,
     100,
   );
   const maintenanceRate = createInputElement(
     "maintenance_rate",
+    idSuffix,
     "number",
     DEFAULT_MAINTENANCE_RATE,
     0.1,
   );
   const homeInsurance = createInputElement(
     "home_insurance",
+    idSuffix,
     "number",
     DEFAULT_HOME_INSURANCE,
     50,
   );
 
-  const canvasDiv = createDivElement("canvas_div");
-  const canvas = createCanvasElement("canvas", {
+  const canvasDiv = createDivElement("canvas_div", idSuffix);
+  const canvas = createCanvasElement("canvas", idSuffix, {
     "max-width": "80em",
     "max-height": "40em",
   });
   canvasDiv.appendChild(canvas);
 
   const elements = [
+    canvasDiv,
     createParagraphElement(
       createLabelElement(houseValue.id, "House value at purchase"),
       houseValue,
@@ -235,7 +252,6 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
       createLabelElement(homeInsurance.id, "Home insurance, annual"),
       homeInsurance,
     ),
-    canvasDiv,
   ];
 
   const wrapperDiv = document.createElement("div");
