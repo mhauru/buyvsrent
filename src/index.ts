@@ -3,7 +3,8 @@ import { map, startWith } from "rxjs/operators";
 import {
   Chart,
   ChartConfiguration,
-  ScatterController,
+  Tooltip,
+  LineController,
   Legend,
   Colors,
   Title,
@@ -27,6 +28,18 @@ function makeNumberObservable(inputElementName: string): Observable<number> {
   );
   return observable;
 }
+
+function makeBooleanObservable(inputElementName: string): Observable<boolean> {
+  const input: HTMLInputElement = document.getElementById(
+    inputElementName,
+  ) as HTMLInputElement;
+  const observable: Observable<boolean> = fromEvent(input, "input").pipe(
+    map((event) => (event.target as HTMLInputElement).checked),
+    startWith(input.checked),
+  );
+  return observable;
+}
+
 // Create streams from the input elements
 const houseValue0$ = makeNumberObservable("house_value_0");
 const cash0$ = makeNumberObservable("cash_0");
@@ -36,6 +49,12 @@ const mortgageMonthlyPayment$ = makeNumberObservable(
 const mortgageInterestRate$ = makeNumberObservable("mortgage_interest_rate");
 const houseAppreciationRate$ = makeNumberObservable("house_appreciation_rate");
 const yearsToForecast$ = makeNumberObservable("years_to_forecast");
+const buyingCosts$ = makeNumberObservable("buying_costs");
+const firstTimeBuyer$ = makeBooleanObservable("first_time_buyer");
+const groundRent$ = makeNumberObservable("ground_rent");
+const serviceCharge$ = makeNumberObservable("service_charge");
+const homeInsurance$ = makeNumberObservable("home_insurance");
+const maintenanceRate$ = makeNumberObservable("maintenance_rate");
 
 const mortgage0$ = combineLatest([houseValue0$, cash0$]).pipe(
   map(([houseValue0, cash0]: Array<number>) => {
@@ -52,27 +71,15 @@ interface AnnualSummary {
   moneySpent: number;
 }
 
-const summary0$: Observable<AnnualSummary> = combineLatest([
-  houseValue0$,
-  mortgage0$,
-]).pipe(
-  map(([houseValue0, mortgage0]: Array<number>) => {
-    return {
-      houseValue: houseValue0,
-      cashValue: 0,
-      otherInvestmentValue: 0,
-      mortgageBalance: mortgage0,
-      yearNumber: 0,
-      moneySpent: 0,
-    };
-  }),
-);
-
 function getNextSummary(
   summary: AnnualSummary,
   houseAppreciationRate: number,
   mortgageInterestRate: number,
   mortgageMonthlyPayment: number,
+  groundRent: number,
+  serviceCharge: number,
+  homeInsurance: number,
+  maintenanceRate: number,
 ): AnnualSummary {
   const newHouseValue =
     summary.houseValue * (1 + houseAppreciationRate / 100.0);
@@ -84,15 +91,66 @@ function getNextSummary(
     cashSaved = -newMortgageBalance;
     newMortgageBalance = 0;
   }
+  const maintenance = (newHouseValue * maintenanceRate) / 100.0;
   return {
     houseValue: newHouseValue,
     cashValue: summary.cashValue + cashSaved,
     otherInvestmentValue: summary.otherInvestmentValue,
     mortgageBalance: newMortgageBalance,
     yearNumber: summary.yearNumber + 1,
-    moneySpent: summary.moneySpent + interest,
+    moneySpent:
+      summary.moneySpent +
+      interest +
+      maintenance +
+      groundRent +
+      serviceCharge +
+      homeInsurance,
   };
 }
+
+function computeStampDuty(houseValue: number, firstTimeBuyer: boolean): number {
+  const thresholds = [
+    0,
+    firstTimeBuyer ? 425_000 : 250_000,
+    925_000,
+    1_500_000,
+    Infinity,
+  ];
+  const rates = [0.0, 0.05, 0.1, 0.12];
+  let stampDuty = 0;
+  for (let i = 0; i < rates.length; i++) {
+    if (houseValue <= thresholds[i]) break;
+    stampDuty +=
+      (Math.min(houseValue, thresholds[i + 1]) - thresholds[i]) * rates[i];
+  }
+  return stampDuty;
+}
+
+const summary0$: Observable<AnnualSummary> = combineLatest([
+  houseValue0$,
+  mortgage0$,
+  buyingCosts$,
+  firstTimeBuyer$,
+]).pipe(
+  map(
+    ([houseValue0, mortgage0, buyingCosts, firstTimeBuyer]: [
+      number,
+      number,
+      number,
+      boolean,
+    ]) => {
+      const stampDuty = computeStampDuty(houseValue0, firstTimeBuyer);
+      return {
+        houseValue: houseValue0,
+        cashValue: -stampDuty - buyingCosts,
+        otherInvestmentValue: 0,
+        mortgageBalance: mortgage0,
+        yearNumber: 0,
+        moneySpent: stampDuty + buyingCosts,
+      };
+    },
+  ),
+);
 
 const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
   summary0$,
@@ -100,6 +158,10 @@ const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
   mortgageInterestRate$,
   mortgageMonthlyPayment$,
   yearsToForecast$,
+  groundRent$,
+  serviceCharge$,
+  homeInsurance$,
+  maintenanceRate$,
 ]).pipe(
   map(
     ([
@@ -108,16 +170,24 @@ const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
       mortgageInterestRate,
       mortgageMonthlyPayment,
       yearsToForecast,
+      groundRent,
+      serviceCharge,
+      homeInsurance,
+      maintenanceRate,
     ]) => {
       const summaries = [summary0];
       let lastSummary = summary0;
 
-      for (let i = 1; i <= yearsToForecast; i++) {
+      for (let i = 0; i < yearsToForecast; i++) {
         const nextSummary = getNextSummary(
           lastSummary,
           houseAppreciationRate,
           mortgageInterestRate,
           mortgageMonthlyPayment,
+          groundRent,
+          serviceCharge,
+          homeInsurance,
+          maintenanceRate,
         );
         summaries.push(nextSummary);
         lastSummary = nextSummary;
@@ -131,11 +201,13 @@ interface PlotPoint {
   x: number;
   y: number;
 }
+
 interface Dataset {
   label: string;
   data: Array<PlotPoint>;
   showLine: boolean;
 }
+
 const datasets$: Observable<Array<Dataset>> = summaries$.pipe(
   map((summaries: Array<AnnualSummary>) => {
     const wealths = summaries.map((s, i) => {
@@ -149,7 +221,7 @@ const datasets$: Observable<Array<Dataset>> = summaries$.pipe(
       };
     });
     const mortgageBalances = summaries.map((s, i) => {
-      return { x: i, y: s.mortgageBalance };
+      return { x: i, y: -s.mortgageBalance };
     });
     const cashValues = summaries.map((s, i) => {
       return { x: i, y: s.cashValue };
@@ -157,6 +229,10 @@ const datasets$: Observable<Array<Dataset>> = summaries$.pipe(
     const houseValues = summaries.map((s, i) => {
       return { x: i, y: s.houseValue };
     });
+    const moneySpent = summaries.map((s, i) => {
+      return { x: i, y: -s.moneySpent };
+    });
+
     return [
       {
         label: "Total wealth",
@@ -178,13 +254,19 @@ const datasets$: Observable<Array<Dataset>> = summaries$.pipe(
         data: mortgageBalances,
         showLine: true,
       },
+      {
+        label: "Money spent",
+        data: moneySpent,
+        showLine: true,
+      },
     ];
   }),
 );
 
 Chart.register(
-  ScatterController,
+  LineController,
   Title,
+  Tooltip,
   Legend,
   Colors,
   PointElement,
@@ -193,12 +275,16 @@ Chart.register(
   CategoryScale,
 );
 
-const config: ChartConfiguration<"scatter", { x: number; y: number }[]> = {
-  type: "scatter",
+const config: ChartConfiguration<"line", { x: number; y: number }[]> = {
+  type: "line",
   data: { datasets: [] },
   options: {
     animation: false,
     responsive: true,
+    hover: {
+      mode: "index",
+      intersect: false,
+    },
     scales: {
       x: {
         type: "linear",
