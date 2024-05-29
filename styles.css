@@ -29,7 +29,6 @@ body {
 
 .input-label {
   width: 100%;
-  max-width: 150px; /* Set a fixed width for labels */
   padding-right: 1em;
   font-weight: bold;
   box-sizing: border-box;
@@ -37,7 +36,7 @@ body {
 
 .input-field {
   flex: 1;
-  min-width: 150px; /* Minimum width for input fields */
+  min-width: 80px; /* Minimum width for input fields */
   padding: 0.5em;
   border: 1px solid #ccc;
   border-radius: 4px;
