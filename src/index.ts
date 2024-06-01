@@ -15,6 +15,7 @@ import {
 } from "chart.js";
 
 const ISA_MAX_CONTRIBUTION = 20_000;
+const DEFAULT_IS_BUYING = true;
 const DEFAULT_HOUSE_VALUE = 500_000;
 const DEFAULT_CASH = 300_000;
 const DEFAULT_MORTGAGE = 215_000;
@@ -26,13 +27,14 @@ const DEFAULT_HOUSE_APPRECIATION_RATE = 3;
 const DEFAULT_STOCK_APPRECIATION_RATE = 6;
 const DEFAULT_YEARS_TO_FORECAST = 25;
 const DEFAULT_BUYING_COSTS = 2500;
-const DEFAULT_FIRST_TIME_BUYER = false;
+const DEFAULT_FIRST_TIME_BUYER = true;
 const DEFAULT_GROUND_RENT = 500;
 const DEFAULT_SERVICE_CHARGE = 1800;
 const DEFAULT_MAINTENANCE_RATE = 2;
 const DEFAULT_HOME_INSURANCE = 300;
 
 interface PropertyInputs {
+  isBuying: HTMLInputElement;
   houseValue: HTMLInputElement;
   cash: HTMLInputElement;
   mortgage: HTMLInputElement;
@@ -64,13 +66,17 @@ const createInputElement = (
   id: string,
   idSuffix: number,
   type: string,
-  value: string | number,
+  value: string | number | boolean,
   step: string | number,
 ): HTMLInputElement => {
   const input = document.createElement("input");
   input.id = `${id}_${idSuffix}`;
   input.type = type;
-  input.value = value.toString();
+  if (type == "checkbox" && typeof value === "boolean") {
+    input.checked = value;
+  } else {
+    input.value = value.toString();
+  }
   input.step = step.toString();
   input.classList.add("input-field");
   return input;
@@ -108,6 +114,13 @@ const createCanvasElement = (
 };
 
 function createPropertyInputs(idSuffix: number): PropertyInputs {
+  const isBuying = createInputElement(
+    "is_buying",
+    idSuffix,
+    "checkbox",
+    DEFAULT_IS_BUYING,
+    1000,
+  );
   const houseValue = createInputElement(
     "house_value",
     idSuffix,
@@ -189,7 +202,7 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
     "first_time_buyer",
     idSuffix,
     "checkbox",
-    DEFAULT_FIRST_TIME_BUYER ? "true" : "false",
+    DEFAULT_FIRST_TIME_BUYER,
     "",
   );
   const groundRent = createInputElement(
@@ -226,6 +239,10 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
   canvasDiv.appendChild(canvas);
 
   const elements = [
+    createParagraphElement(
+      createLabelElement(isBuying.id, "Buying instead of renting"),
+      isBuying,
+    ),
     createParagraphElement(
       createLabelElement(houseValue.id, "House value at purchase"),
       houseValue,
@@ -319,6 +336,7 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
   document.body.appendChild(wrapperDiv);
 
   return {
+    isBuying,
     houseValue,
     cash,
     mortgage,
@@ -469,6 +487,7 @@ function getNextSummary(
   summary: AnnualSummary,
   salary: number,
   rent: number,
+  isBuying: boolean,
   stockAppreciationRate: number,
   houseAppreciationRate: number,
   mortgageInterestRate: number,
@@ -488,7 +507,7 @@ function getNextSummary(
     serviceCharge,
     homeInsurance,
   );
-  payRent(nextSummary, rent);
+  if (!isBuying) payRent(nextSummary, rent);
   appreciateHouseValue(nextSummary, houseAppreciationRate);
   appreciateStockValue(nextSummary, stockAppreciationRate);
   investSurplusCashInStocks(nextSummary);
@@ -533,6 +552,7 @@ function makeScenario(
   const propertyInputs = createPropertyInputs(idNumber);
 
   // Create streams from the input elements
+  const isBuying$ = makeBooleanObservable(propertyInputs.isBuying);
   const houseValue0$ = makeNumberObservable(propertyInputs.houseValue);
   const cash0$ = makeNumberObservable(propertyInputs.cash);
   const mortgage0$ = makeNumberObservable(propertyInputs.mortgage);
@@ -559,6 +579,7 @@ function makeScenario(
   const maintenanceRate$ = makeNumberObservable(propertyInputs.maintenanceRate);
 
   const summary0$: Observable<AnnualSummary> = combineLatest([
+    isBuying$,
     houseValue0$,
     cash0$,
     mortgage0$,
@@ -566,7 +587,8 @@ function makeScenario(
     firstTimeBuyer$,
   ]).pipe(
     map(
-      ([houseValue0, cash0, mortgage0, buyingCosts, firstTimeBuyer]: [
+      ([isBuying, houseValue0, cash0, mortgage0, buyingCosts, firstTimeBuyer]: [
+        boolean,
         number,
         number,
         number,
@@ -582,7 +604,7 @@ function makeScenario(
           yearNumber: 0,
           moneySpent: 0,
         };
-        if (houseValue0 > 0)
+        if (isBuying)
           buyHouse(
             summary,
             houseValue0,
@@ -601,6 +623,7 @@ function makeScenario(
     summary0$,
     salary$,
     rent$,
+    isBuying$,
     stockAppreciationRate$,
     houseAppreciationRate$,
     mortgageInterestRate$,
@@ -616,6 +639,7 @@ function makeScenario(
         summary0,
         salary,
         rent,
+        isBuying,
         stockAppreciationRate,
         houseAppreciationRate,
         mortgageInterestRate,
@@ -634,6 +658,7 @@ function makeScenario(
             lastSummary,
             salary,
             rent,
+            isBuying,
             stockAppreciationRate,
             houseAppreciationRate,
             mortgageInterestRate,
