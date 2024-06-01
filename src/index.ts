@@ -430,6 +430,15 @@ function investSurplusCashInStocks(summary: AnnualSummary) {
   summary.stockNonIsaValue += nonIsaInvestment;
 }
 
+function goBankrupt(summary: AnnualSummary) {
+  summary.houseValue = NaN;
+  summary.cashValue = NaN;
+  summary.stockIsaValue = NaN;
+  summary.stockNonIsaValue = NaN;
+  summary.mortgageBalance = NaN;
+  summary.moneySpent = NaN;
+}
+
 function buyHouse(
   summary: AnnualSummary,
   houseValue: number,
@@ -450,14 +459,6 @@ function buyHouse(
   }
 }
 
-function goBankrupt(summary: AnnualSummary) {
-  summary.houseValue = 0;
-  summary.cashValue = 0;
-  summary.stockIsaValue = 0;
-  summary.stockNonIsaValue = 0;
-  summary.mortgageBalance = 0;
-  summary.moneySpent = 0;
-}
 function checkSummary(summary: AnnualSummary) {
   if (summary.cashValue < 0) {
     goBankrupt(summary);
@@ -804,8 +805,12 @@ function makeScenario(
     let minX = Infinity;
     let maxX = -Infinity;
     for (const dataset of datasets) {
-      const yValues = dataset.data.map((point) => point.y);
-      const xValues = dataset.data.map((point) => point.x);
+      const yValues = dataset.data
+        .map((point) => point.y)
+        .filter((y) => !Number.isNaN(y));
+      const xValues = dataset.data
+        .map((point) => point.x)
+        .filter((y) => !Number.isNaN(y));
       minY = Math.min(minY, ...yValues);
       maxY = Math.max(maxY, ...yValues);
       minX = Math.min(minX, ...xValues);
