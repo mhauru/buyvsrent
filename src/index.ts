@@ -14,11 +14,14 @@ import {
   CategoryScale,
 } from "chart.js";
 
-const DEFAULT_HOUSE_VALUE = 500000;
-const DEFAULT_CASH = 300000;
+const ISA_MAX_CONTRIBUTION = 20_000;
+const DEFAULT_HOUSE_VALUE = 500_000;
+const DEFAULT_CASH = 300_000;
+const DEFAULT_SALARY = 60_000;
 const DEFAULT_MORTGAGE_INTEREST_RATE = 5;
 const DEFAULT_MORTGAGE_MONTHLY_PAYMENT = 2000;
 const DEFAULT_HOUSE_APPRECIATION_RATE = 3;
+const DEFAULT_STOCK_APPRECIATION_RATE = 6;
 const DEFAULT_YEARS_TO_FORECAST = 25;
 const DEFAULT_BUYING_COSTS = 2500;
 const DEFAULT_FIRST_TIME_BUYER = false;
@@ -30,8 +33,10 @@ const DEFAULT_HOME_INSURANCE = 300;
 interface PropertyInputs {
   houseValue: HTMLInputElement;
   cash: HTMLInputElement;
+  salary: HTMLInputElement;
   mortgageInterestRate: HTMLInputElement;
   mortgageMonthlyPayment: HTMLInputElement;
+  stockAppreciationRate: HTMLInputElement;
   houseAppreciationRate: HTMLInputElement;
   yearsToForecast: HTMLInputElement;
   buyingCosts: HTMLInputElement;
@@ -113,6 +118,13 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
     DEFAULT_CASH,
     1000,
   );
+  const salary = createInputElement(
+    "salary",
+    idSuffix,
+    "number",
+    DEFAULT_SALARY,
+    100,
+  );
   const mortgageInterestRate = createInputElement(
     "mortgage_interest_rate",
     idSuffix,
@@ -126,6 +138,13 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
     "number",
     DEFAULT_MORTGAGE_MONTHLY_PAYMENT,
     100,
+  );
+  const stockAppreciationRate = createInputElement(
+    "stock_appreciation_rate",
+    idSuffix,
+    "number",
+    DEFAULT_STOCK_APPRECIATION_RATE,
+    0.1,
   );
   const houseAppreciationRate = createInputElement(
     "house_appreciation_rate",
@@ -198,6 +217,10 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
       cash,
     ),
     createParagraphElement(
+      createLabelElement(salary.id, "Net annual salary"),
+      salary,
+    ),
+    createParagraphElement(
       createLabelElement(
         mortgageInterestRate.id,
         "Mortgage interest rate (%), annual",
@@ -210,6 +233,13 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
         "Mortgage payment, monthly",
       ),
       mortgageMonthlyPayment,
+    ),
+    createParagraphElement(
+      createLabelElement(
+        stockAppreciationRate.id,
+        "Stock value appreciation (%), annual",
+      ),
+      stockAppreciationRate,
     ),
     createParagraphElement(
       createLabelElement(
@@ -268,8 +298,10 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
   return {
     houseValue,
     cash,
+    salary,
     mortgageInterestRate,
     mortgageMonthlyPayment,
+    stockAppreciationRate,
     houseAppreciationRate,
     yearsToForecast,
     buyingCosts,
@@ -301,14 +333,75 @@ function makeBooleanObservable(input: HTMLInputElement): Observable<boolean> {
 interface AnnualSummary {
   houseValue: number;
   cashValue: number;
-  otherInvestmentValue: number;
+  stockIsaValue: number;
+  stockNonIsaValue: number;
   mortgageBalance: number;
   yearNumber: number;
   moneySpent: number;
 }
 
+function appreciateHouseValue(
+  summary: AnnualSummary,
+  houseAppreciationRate: number,
+) {
+  summary.houseValue *= 1 + houseAppreciationRate / 100.0;
+}
+
+function appreciateStockValue(
+  summary: AnnualSummary,
+  stockAppreciationRate: number,
+) {
+  summary.stockIsaValue *= 1 + stockAppreciationRate / 100.0;
+  summary.stockNonIsaValue *= 1 + stockAppreciationRate / 100.0;
+}
+
+function getSalary(summary: AnnualSummary, annualSalary: number) {
+  summary.cashValue += annualSalary;
+}
+
+function payMortgage(
+  summary: AnnualSummary,
+  mortgageMonthlyPayment: number,
+  mortgageInterestRate: number,
+) {
+  const interest = (summary.mortgageBalance * mortgageInterestRate) / 100.0;
+  let mortgageAnnualPayment = mortgageMonthlyPayment * 12;
+  let principalReduction = mortgageAnnualPayment - interest;
+  if (principalReduction > summary.mortgageBalance) {
+    principalReduction = summary.mortgageBalance;
+    mortgageAnnualPayment = principalReduction + interest;
+  }
+  summary.mortgageBalance -= principalReduction;
+  summary.cashValue -= mortgageAnnualPayment;
+  summary.moneySpent += interest;
+}
+
+function payRunningCosts(
+  summary: AnnualSummary,
+  maintenanceRate: number,
+  groundRent: number,
+  serviceCharge: number,
+  homeInsurance: number,
+) {
+  const maintenance = (summary.houseValue * maintenanceRate) / 100.0;
+  const totalOutgoings =
+    maintenance + groundRent + serviceCharge + homeInsurance;
+  summary.cashValue -= totalOutgoings;
+  summary.moneySpent += totalOutgoings;
+}
+
+function investSurplusCashInStocks(summary: AnnualSummary) {
+  const isaInvestment = Math.min(summary.cashValue, ISA_MAX_CONTRIBUTION);
+  const nonIsaInvestment = summary.cashValue - isaInvestment;
+  summary.cashValue -= isaInvestment + nonIsaInvestment;
+  summary.stockIsaValue += isaInvestment;
+  summary.stockNonIsaValue += nonIsaInvestment;
+}
+
 function getNextSummary(
   summary: AnnualSummary,
+  salary: number,
+  stockAppreciationRate: number,
   houseAppreciationRate: number,
   mortgageInterestRate: number,
   mortgageMonthlyPayment: number,
@@ -317,31 +410,21 @@ function getNextSummary(
   homeInsurance: number,
   maintenanceRate: number,
 ): AnnualSummary {
-  const newHouseValue =
-    summary.houseValue * (1 + houseAppreciationRate / 100.0);
-  const interest = (summary.mortgageBalance * mortgageInterestRate) / 100.0;
-  let newMortgageBalance =
-    summary.mortgageBalance + interest - mortgageMonthlyPayment * 12;
-  let cashSaved = 0.0;
-  if (newMortgageBalance < 0) {
-    cashSaved = -newMortgageBalance;
-    newMortgageBalance = 0;
-  }
-  const maintenance = (newHouseValue * maintenanceRate) / 100.0;
-  return {
-    houseValue: newHouseValue,
-    cashValue: summary.cashValue + cashSaved,
-    otherInvestmentValue: summary.otherInvestmentValue,
-    mortgageBalance: newMortgageBalance,
-    yearNumber: summary.yearNumber + 1,
-    moneySpent:
-      summary.moneySpent +
-      interest +
-      maintenance +
-      groundRent +
-      serviceCharge +
-      homeInsurance,
-  };
+  const nextSummary = { ...summary };
+  getSalary(nextSummary, salary);
+  payMortgage(nextSummary, mortgageMonthlyPayment, mortgageInterestRate);
+  payRunningCosts(
+    nextSummary,
+    maintenanceRate,
+    groundRent,
+    serviceCharge,
+    homeInsurance,
+  );
+  appreciateHouseValue(nextSummary, houseAppreciationRate);
+  appreciateStockValue(nextSummary, stockAppreciationRate);
+  investSurplusCashInStocks(nextSummary);
+  nextSummary.yearNumber += 1;
+  return nextSummary;
 }
 
 function computeStampDuty(houseValue: number, firstTimeBuyer: boolean): number {
@@ -382,11 +465,15 @@ function makeScenario(
   // Create streams from the input elements
   const houseValue0$ = makeNumberObservable(propertyInputs.houseValue);
   const cash0$ = makeNumberObservable(propertyInputs.cash);
+  const salary$ = makeNumberObservable(propertyInputs.salary);
   const mortgageMonthlyPayment$ = makeNumberObservable(
     propertyInputs.mortgageMonthlyPayment,
   );
   const mortgageInterestRate$ = makeNumberObservable(
     propertyInputs.mortgageInterestRate,
+  );
+  const stockAppreciationRate$ = makeNumberObservable(
+    propertyInputs.stockAppreciationRate,
   );
   const houseAppreciationRate$ = makeNumberObservable(
     propertyInputs.houseAppreciationRate,
@@ -422,7 +509,8 @@ function makeScenario(
         return {
           houseValue: houseValue0,
           cashValue: -stampDuty - buyingCosts,
-          otherInvestmentValue: 0,
+          stockIsaValue: 0,
+          stockNonIsaValue: 0,
           mortgageBalance: mortgage0,
           yearNumber: 0,
           moneySpent: stampDuty + buyingCosts,
@@ -433,6 +521,8 @@ function makeScenario(
 
   const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
     summary0$,
+    salary$,
+    stockAppreciationRate$,
     houseAppreciationRate$,
     mortgageInterestRate$,
     mortgageMonthlyPayment$,
@@ -445,6 +535,8 @@ function makeScenario(
     map(
       ([
         summary0,
+        salary,
+        stockAppreciationRate,
         houseAppreciationRate,
         mortgageInterestRate,
         mortgageMonthlyPayment,
@@ -460,6 +552,8 @@ function makeScenario(
         for (let i = 0; i < yearsToForecast; i++) {
           const nextSummary = getNextSummary(
             lastSummary,
+            salary,
+            stockAppreciationRate,
             houseAppreciationRate,
             mortgageInterestRate,
             mortgageMonthlyPayment,
@@ -484,7 +578,8 @@ function makeScenario(
           y:
             s.houseValue +
             s.cashValue +
-            s.otherInvestmentValue -
+            s.stockIsaValue +
+            s.stockNonIsaValue -
             s.mortgageBalance,
         };
       });
@@ -493,6 +588,9 @@ function makeScenario(
       });
       const cashValues = summaries.map((s, i) => {
         return { x: i, y: s.cashValue };
+      });
+      const stockValues = summaries.map((s, i) => {
+        return { x: i, y: s.stockIsaValue + s.stockNonIsaValue };
       });
       const houseValues = summaries.map((s, i) => {
         return { x: i, y: s.houseValue };
@@ -510,6 +608,11 @@ function makeScenario(
         {
           label: "House value",
           data: houseValues,
+          showLine: true,
+        },
+        {
+          label: "Stock",
+          data: stockValues,
           showLine: true,
         },
         {
