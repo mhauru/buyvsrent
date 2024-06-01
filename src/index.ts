@@ -430,6 +430,26 @@ function investSurplusCashInStocks(summary: AnnualSummary) {
   summary.stockNonIsaValue += nonIsaInvestment;
 }
 
+function buyHouse(
+  summary: AnnualSummary,
+  houseValue: number,
+  mortgage: number,
+  buyingCosts: number,
+  firstTimeBuyer: boolean,
+) {
+  const stampDuty = computeStampDuty(houseValue, firstTimeBuyer);
+  const cashPurchasePart = houseValue - mortgage;
+  const cashNeeded = stampDuty + buyingCosts + cashPurchasePart;
+  if (cashNeeded > summary.cashValue) {
+    goBankrupt(summary);
+  } else {
+    summary.cashValue -= cashNeeded;
+    summary.mortgageBalance += mortgage;
+    summary.moneySpent += stampDuty + buyingCosts;
+    summary.houseValue += houseValue;
+  }
+}
+
 function goBankrupt(summary: AnnualSummary) {
   summary.houseValue = 0;
   summary.cashValue = 0;
@@ -537,25 +557,6 @@ function makeScenario(
   const homeInsurance$ = makeNumberObservable(propertyInputs.homeInsurance);
   const maintenanceRate$ = makeNumberObservable(propertyInputs.maintenanceRate);
 
-  function buyHouse(
-    summary: AnnualSummary,
-    houseValue: number,
-    mortgage: number,
-    buyingCosts: number,
-    firstTimeBuyer: boolean,
-  ) {
-    const stampDuty = computeStampDuty(houseValue, firstTimeBuyer);
-    const cashPurchasePart = houseValue - mortgage;
-    const cashNeeded = stampDuty + buyingCosts + cashPurchasePart;
-    if (cashNeeded > summary.cashValue) {
-      goBankrupt(summary);
-    } else {
-      summary.cashValue -= cashNeeded;
-      summary.mortgageBalance += mortgage;
-      summary.moneySpent += stampDuty + buyingCosts;
-      summary.houseValue += houseValue;
-    }
-  }
   const summary0$: Observable<AnnualSummary> = combineLatest([
     houseValue0$,
     cash0$,
@@ -580,7 +581,14 @@ function makeScenario(
           yearNumber: 0,
           moneySpent: 0,
         };
-        buyHouse(summary, houseValue0, mortgage0, buyingCosts, firstTimeBuyer);
+        if (houseValue0 > 0)
+          buyHouse(
+            summary,
+            houseValue0,
+            mortgage0,
+            buyingCosts,
+            firstTimeBuyer,
+          );
         investSurplusCashInStocks(summary);
         checkSummary(summary);
         return summary;
