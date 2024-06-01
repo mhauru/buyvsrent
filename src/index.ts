@@ -1,4 +1,4 @@
-import { fromEvent, Observable, combineLatest } from "rxjs";
+import { fromEvent, Observable, combineLatest, BehaviorSubject } from "rxjs";
 import { map, startWith } from "rxjs/operators";
 import {
   Chart,
@@ -373,7 +373,10 @@ interface Dataset {
   showLine: boolean;
 }
 
-function makeScenario(idNumber: number) {
+function makeScenario(
+  idNumber: number,
+  axisLimitsSubject: BehaviorSubject<MinMaxObject>,
+) {
   const propertyInputs = createPropertyInputs(idNumber);
 
   // Create streams from the input elements
@@ -555,6 +558,12 @@ function makeScenario(idNumber: number) {
           type: "linear",
           position: "bottom",
         },
+        y: {
+          type: "linear",
+          position: "left",
+          max: 0,
+          min: 0,
+        },
       },
       plugins: {
         colors: {
@@ -577,11 +586,72 @@ function makeScenario(idNumber: number) {
   const context = propertyInputs.canvas.getContext("2d");
   const chart = new Chart(context, config);
 
+  let currentMinMax: MinMaxObject;
+
+  axisLimitsSubject.subscribe({
+    next: (value: MinMaxObject) => {
+      currentMinMax = value;
+      const minY = Math.min(...Object.values(value.minY));
+      const maxY = Math.max(...Object.values(value.maxY));
+      const roundingUnitY = 100_000;
+      const minYMarginFactor = minY < 0 ? 1.05 : 0.95;
+      const maxYMarginFactor = maxY > 0 ? 1.05 : 0.95;
+      const plotMinY =
+        Math.floor((minY * minYMarginFactor) / roundingUnitY) * roundingUnitY;
+      const plotMaxY =
+        Math.ceil((maxY * maxYMarginFactor) / roundingUnitY) * roundingUnitY;
+      chart.options.scales.y.min = plotMinY;
+      chart.options.scales.y.max = plotMaxY;
+
+      const minX = Math.min(...Object.values(value.minX));
+      const maxX = Math.max(...Object.values(value.maxX));
+      const plotMinX = minX;
+      const plotMaxX = maxX;
+      chart.options.scales.x.min = plotMinX;
+      chart.options.scales.x.max = plotMaxX;
+      chart.update();
+    },
+  });
+
   datasets$.subscribe((datasets) => {
     config.data.datasets = datasets;
+
+    let minY = Infinity;
+    let maxY = -Infinity;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    for (const dataset of datasets) {
+      const yValues = dataset.data.map((point) => point.y);
+      const xValues = dataset.data.map((point) => point.x);
+      minY = Math.min(minY, ...yValues);
+      maxY = Math.max(maxY, ...yValues);
+      minX = Math.min(minX, ...xValues);
+      maxX = Math.max(maxX, ...xValues);
+    }
+    currentMinMax.minY[idNumber] = minY;
+    currentMinMax.maxY[idNumber] = maxY;
+    currentMinMax.minX[idNumber] = minX;
+    currentMinMax.maxX[idNumber] = maxX;
+    axisLimitsSubject.next(currentMinMax);
+
     chart.update();
   });
 }
 
-makeScenario(1);
-makeScenario(2);
+type MinMaxObject = {
+  minY: { [key: number]: number };
+  maxY: { [key: number]: number };
+  minX: { [key: number]: number };
+  maxX: { [key: number]: number };
+};
+
+// Only used for making sure all plots have the same axis limits.
+const axisLimitsSubject = new BehaviorSubject<MinMaxObject>({
+  minY: {},
+  maxY: {},
+  minX: {},
+  maxX: {},
+});
+
+makeScenario(1, axisLimitsSubject);
+makeScenario(2, axisLimitsSubject);
