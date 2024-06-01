@@ -17,7 +17,9 @@ import {
 const ISA_MAX_CONTRIBUTION = 20_000;
 const DEFAULT_HOUSE_VALUE = 500_000;
 const DEFAULT_CASH = 300_000;
-const DEFAULT_SALARY = 60_000;
+const DEFAULT_MORTGAGE = 215_000;
+const DEFAULT_SALARY = 45_000;
+const DEFAULT_RENT = 2000;
 const DEFAULT_MORTGAGE_INTEREST_RATE = 5;
 const DEFAULT_MORTGAGE_MONTHLY_PAYMENT = 2000;
 const DEFAULT_HOUSE_APPRECIATION_RATE = 3;
@@ -33,7 +35,9 @@ const DEFAULT_HOME_INSURANCE = 300;
 interface PropertyInputs {
   houseValue: HTMLInputElement;
   cash: HTMLInputElement;
+  mortgage: HTMLInputElement;
   salary: HTMLInputElement;
+  rent: HTMLInputElement;
   mortgageInterestRate: HTMLInputElement;
   mortgageMonthlyPayment: HTMLInputElement;
   stockAppreciationRate: HTMLInputElement;
@@ -118,11 +122,25 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
     DEFAULT_CASH,
     1000,
   );
+  const mortgage = createInputElement(
+    "mortgage",
+    idSuffix,
+    "number",
+    DEFAULT_MORTGAGE,
+    1000,
+  );
   const salary = createInputElement(
     "salary",
     idSuffix,
     "number",
     DEFAULT_SALARY,
+    100,
+  );
+  const rent = createInputElement(
+    "rent",
+    idSuffix,
+    "number",
+    DEFAULT_RENT,
     100,
   );
   const mortgageInterestRate = createInputElement(
@@ -217,9 +235,14 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
       cash,
     ),
     createParagraphElement(
+      createLabelElement(mortgage.id, "Initial mortgage"),
+      mortgage,
+    ),
+    createParagraphElement(
       createLabelElement(salary.id, "Net annual salary"),
       salary,
     ),
+    createParagraphElement(createLabelElement(rent.id, "Monthly rent"), rent),
     createParagraphElement(
       createLabelElement(
         mortgageInterestRate.id,
@@ -274,7 +297,7 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
     createParagraphElement(
       createLabelElement(
         maintenanceRate.id,
-        "Maintenance cost, % of value, annual",
+        "Maintenance costs, % of value, annual",
       ),
       maintenanceRate,
     ),
@@ -298,7 +321,9 @@ function createPropertyInputs(idSuffix: number): PropertyInputs {
   return {
     houseValue,
     cash,
+    mortgage,
     salary,
+    rent,
     mortgageInterestRate,
     mortgageMonthlyPayment,
     stockAppreciationRate,
@@ -336,8 +361,8 @@ interface AnnualSummary {
   stockIsaValue: number;
   stockNonIsaValue: number;
   mortgageBalance: number;
-  yearNumber: number;
   moneySpent: number;
+  yearNumber: number;
 }
 
 function appreciateHouseValue(
@@ -355,8 +380,14 @@ function appreciateStockValue(
   summary.stockNonIsaValue *= 1 + stockAppreciationRate / 100.0;
 }
 
-function getSalary(summary: AnnualSummary, annualSalary: number) {
-  summary.cashValue += annualSalary;
+function getSalary(summary: AnnualSummary, salary: number) {
+  summary.cashValue += salary;
+}
+
+function payRent(summary: AnnualSummary, monthlyRent: number) {
+  const annualRent = monthlyRent * 12;
+  summary.cashValue -= annualRent;
+  summary.moneySpent += annualRent;
 }
 
 function payMortgage(
@@ -376,7 +407,7 @@ function payMortgage(
   summary.moneySpent += interest;
 }
 
-function payRunningCosts(
+function payRunningHouseCosts(
   summary: AnnualSummary,
   maintenanceRate: number,
   groundRent: number,
@@ -391,6 +422,7 @@ function payRunningCosts(
 }
 
 function investSurplusCashInStocks(summary: AnnualSummary) {
+  if (summary.cashValue < 0) return;
   const isaInvestment = Math.min(summary.cashValue, ISA_MAX_CONTRIBUTION);
   const nonIsaInvestment = summary.cashValue - isaInvestment;
   summary.cashValue -= isaInvestment + nonIsaInvestment;
@@ -398,9 +430,24 @@ function investSurplusCashInStocks(summary: AnnualSummary) {
   summary.stockNonIsaValue += nonIsaInvestment;
 }
 
+function goBankrupt(summary: AnnualSummary) {
+  summary.houseValue = 0;
+  summary.cashValue = 0;
+  summary.stockIsaValue = 0;
+  summary.stockNonIsaValue = 0;
+  summary.mortgageBalance = 0;
+  summary.moneySpent = 0;
+}
+function checkSummary(summary: AnnualSummary) {
+  if (summary.cashValue < 0) {
+    goBankrupt(summary);
+  }
+}
+
 function getNextSummary(
   summary: AnnualSummary,
   salary: number,
+  rent: number,
   stockAppreciationRate: number,
   houseAppreciationRate: number,
   mortgageInterestRate: number,
@@ -413,16 +460,18 @@ function getNextSummary(
   const nextSummary = { ...summary };
   getSalary(nextSummary, salary);
   payMortgage(nextSummary, mortgageMonthlyPayment, mortgageInterestRate);
-  payRunningCosts(
+  payRunningHouseCosts(
     nextSummary,
     maintenanceRate,
     groundRent,
     serviceCharge,
     homeInsurance,
   );
+  payRent(nextSummary, rent);
   appreciateHouseValue(nextSummary, houseAppreciationRate);
   appreciateStockValue(nextSummary, stockAppreciationRate);
   investSurplusCashInStocks(nextSummary);
+  checkSummary(nextSummary);
   nextSummary.yearNumber += 1;
   return nextSummary;
 }
@@ -465,7 +514,9 @@ function makeScenario(
   // Create streams from the input elements
   const houseValue0$ = makeNumberObservable(propertyInputs.houseValue);
   const cash0$ = makeNumberObservable(propertyInputs.cash);
+  const mortgage0$ = makeNumberObservable(propertyInputs.mortgage);
   const salary$ = makeNumberObservable(propertyInputs.salary);
+  const rent$ = makeNumberObservable(propertyInputs.rent);
   const mortgageMonthlyPayment$ = makeNumberObservable(
     propertyInputs.mortgageMonthlyPayment,
   );
@@ -486,35 +537,53 @@ function makeScenario(
   const homeInsurance$ = makeNumberObservable(propertyInputs.homeInsurance);
   const maintenanceRate$ = makeNumberObservable(propertyInputs.maintenanceRate);
 
-  const mortgage0$ = combineLatest([houseValue0$, cash0$]).pipe(
-    map(([houseValue0, cash0]: Array<number>) => {
-      return houseValue0 - cash0;
-    }),
-  );
-
+  function buyHouse(
+    summary: AnnualSummary,
+    houseValue: number,
+    mortgage: number,
+    buyingCosts: number,
+    firstTimeBuyer: boolean,
+  ) {
+    const stampDuty = computeStampDuty(houseValue, firstTimeBuyer);
+    const cashPurchasePart = houseValue - mortgage;
+    const cashNeeded = stampDuty + buyingCosts + cashPurchasePart;
+    if (cashNeeded > summary.cashValue) {
+      goBankrupt(summary);
+    } else {
+      summary.cashValue -= cashNeeded;
+      summary.mortgageBalance += mortgage;
+      summary.moneySpent += stampDuty + buyingCosts;
+      summary.houseValue += houseValue;
+    }
+  }
   const summary0$: Observable<AnnualSummary> = combineLatest([
     houseValue0$,
+    cash0$,
     mortgage0$,
     buyingCosts$,
     firstTimeBuyer$,
   ]).pipe(
     map(
-      ([houseValue0, mortgage0, buyingCosts, firstTimeBuyer]: [
+      ([houseValue0, cash0, mortgage0, buyingCosts, firstTimeBuyer]: [
+        number,
         number,
         number,
         number,
         boolean,
       ]) => {
-        const stampDuty = computeStampDuty(houseValue0, firstTimeBuyer);
-        return {
-          houseValue: houseValue0,
-          cashValue: -stampDuty - buyingCosts,
+        const summary = {
+          houseValue: 0,
+          cashValue: cash0,
           stockIsaValue: 0,
           stockNonIsaValue: 0,
-          mortgageBalance: mortgage0,
+          mortgageBalance: 0,
           yearNumber: 0,
-          moneySpent: stampDuty + buyingCosts,
+          moneySpent: 0,
         };
+        buyHouse(summary, houseValue0, mortgage0, buyingCosts, firstTimeBuyer);
+        investSurplusCashInStocks(summary);
+        checkSummary(summary);
+        return summary;
       },
     ),
   );
@@ -522,6 +591,7 @@ function makeScenario(
   const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
     summary0$,
     salary$,
+    rent$,
     stockAppreciationRate$,
     houseAppreciationRate$,
     mortgageInterestRate$,
@@ -536,6 +606,7 @@ function makeScenario(
       ([
         summary0,
         salary,
+        rent,
         stockAppreciationRate,
         houseAppreciationRate,
         mortgageInterestRate,
@@ -553,6 +624,7 @@ function makeScenario(
           const nextSummary = getNextSummary(
             lastSummary,
             salary,
+            rent,
             stockAppreciationRate,
             houseAppreciationRate,
             mortgageInterestRate,
