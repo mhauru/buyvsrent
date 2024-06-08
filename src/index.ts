@@ -8,7 +8,6 @@ import {
 import { Inputs, PropertyInputs, createPropertyInputs } from "./ui";
 import { MinMaxObject, createPlot } from "./plots";
 
-const DEFAULT_IS_BUYING = true;
 const DEFAULT_HOUSE_VALUE = 500_000;
 const DEFAULT_CASH = 300_000;
 const DEFAULT_MORTGAGE = 215_000;
@@ -48,7 +47,7 @@ type InputsById = {
 
 const DEFAULT_INPUTS_BY_ID = {
   1: {
-    isBuying: DEFAULT_IS_BUYING,
+    isBuying: true,
     houseValue: DEFAULT_HOUSE_VALUE,
     cash: DEFAULT_CASH,
     mortgage: DEFAULT_MORTGAGE,
@@ -67,7 +66,7 @@ const DEFAULT_INPUTS_BY_ID = {
     homeInsurance: DEFAULT_HOME_INSURANCE,
   },
   2: {
-    isBuying: DEFAULT_IS_BUYING,
+    isBuying: false,
     houseValue: DEFAULT_HOUSE_VALUE,
     cash: DEFAULT_CASH,
     mortgage: DEFAULT_MORTGAGE,

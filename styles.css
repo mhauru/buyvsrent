@@ -15,16 +15,42 @@ body {
   margin: 1em;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  flex: 1; /* This makes each .property-wrapper take an equal share of the available space */
-  min-width: 300px; /* Ensures the boxes don't get too small */
+  flex: 1;
+  min-width: 300px;
+}
+
+.inputs-div {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
 }
 
 .input-group {
   display: flex;
   flex-wrap: wrap;
+  gap: 8px;
+    position: relative; /* Necessary for the pseudo-element positioning */
+  padding-bottom: 16px; /* Space for the separator line */
+}
+
+/* Horizontal separator line between input groups */
+.input-group:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px; /* Thickness of the separator line */
+  background-color: #ccc; /* Color of the separator line */
+}
+
+.input-div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5em;
 }
 
 .input-label {
@@ -36,18 +62,10 @@ body {
 
 .input-field {
   flex: 1;
-  min-width: 80px; /* Minimum width for input fields */
   padding: 0.5em;
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
-}
-
-.inputs-div {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1em;
-  width: 100%;
 }
 
 .canvas-container {
