@@ -62,7 +62,7 @@ body {
 }
 
 .input-field {
-  width: 100%;
+  max-width: 120px;
   padding: 0.5em;
   border: 1px solid #ccc;
   border-radius: 4px;

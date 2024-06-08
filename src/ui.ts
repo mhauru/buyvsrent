@@ -248,20 +248,20 @@ export function createPropertyInputs(
 
   const groups = [
     createGroup([isBuyingDiv, cashDiv, salaryDiv, yearsToForecastDiv]),
+    createGroup([houseValueDiv, buyingCostsDiv, firstTimeBuyerDiv]),
     createGroup([
-      houseValueDiv,
-      houseAppreciationRateDiv,
       mortgageDiv,
       mortgageInterestRateDiv,
       mortgageMonthlyPaymentDiv,
-      buyingCostsDiv,
-      firstTimeBuyerDiv,
+    ]),
+    createGroup([
       groundRentDiv,
       serviceChargeDiv,
       maintenanceRateDiv,
       homeInsuranceDiv,
     ]),
-    createGroup([rentDiv, stockAppreciationRateDiv]),
+    createGroup([rentDiv]),
+    createGroup([houseAppreciationRateDiv, stockAppreciationRateDiv]),
   ];
 
   const canvasDiv = createCanvasDivElement("canvas_div", idSuffix);
