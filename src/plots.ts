@@ -164,7 +164,7 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
       currentMinMax = value;
       const minY = Math.min(...Object.values(value.minY));
       const maxY = Math.max(...Object.values(value.maxY));
-      const roundingUnitY = 100_000;
+      const roundingUnitY = 250_000;
       const minYMarginFactor = minY < 0 ? 1.05 : 0.95;
       const maxYMarginFactor = maxY > 0 ? 1.05 : 0.95;
       const plotMinY =

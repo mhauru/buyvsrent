@@ -8,18 +8,33 @@ import {
 import { Inputs, PropertyInputs, createPropertyInputs } from "./ui";
 import { MinMaxObject, createPlot } from "./plots";
 
-const DEFAULT_HOUSE_VALUE = 500_000;
+const DEFAULT_HOUSE_PRICE = 500_000;
 const DEFAULT_CASH = 300_000;
-const DEFAULT_MORTGAGE = 215_000;
+const DEFAULT_MORTGAGE = 200_000;
 const DEFAULT_SALARY = 3_750;
-const DEFAULT_SALARY_GROWTH = 3;
-const DEFAULT_RENT = 2000;
-const DEFAULT_RENT_GROWTH = 3;
-const DEFAULT_MORTGAGE_INTEREST_RATE = 5;
-const DEFAULT_MORTGAGE_MONTHLY_PAYMENT = 2000;
-const DEFAULT_HOUSE_APPRECIATION_RATE = 3;
+const DEFAULT_SALARY_GROWTH = 5;
+// The average gross rental yield, i.e. annual rent divided by house price, is around
+// 4.5% in London.
+// Source: https://www.trackcapital.co.uk/news-articles/uk-buy-to-let-yield-map/
+const DEFAULT_RENT = (DEFAULT_HOUSE_PRICE * 0.045) / 12;
+// Rents are assumed to grow at the same rate as house prices. See below for house prices.
+const DEFAULT_RENT_GROWTH = 1.5;
+// These are numbers I got from a Nationwide calculator for 500k house with 200k mortgage
+// on 2024-06-09, rounded a bit.
+const DEFAULT_MORTGAGE_STAGE1_LENGTH = 2;
+const DEFAULT_MORTGAGE_INTEREST_RATE_STAGE1 = 6.14;
+const DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE1 = 1450;
+const DEFAULT_MORTGAGE_INTEREST_RATE_STAGE2 = 7.99;
+const DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE2 = 1650;
+// House prices in London grew on average 4.4% between Jan 2005 and Jan 2024.
+// Source: https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/housepriceindex/latest
+// CPIH grew by 2.9% in the same time.
+// Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23
+// Hence 1.5% for house price apprecation.
+const DEFAULT_HOUSE_APPRECIATION_RATE = 1.5;
+// Often quoted numbers for historical stock price growth are 6% and 7% over inflation.
 const DEFAULT_STOCK_APPRECIATION_RATE = 6;
-const DEFAULT_YEARS_TO_FORECAST = 25;
+const DEFAULT_YEARS_TO_FORECAST = 20;
 const DEFAULT_BUYING_COSTS = 2500;
 const DEFAULT_FIRST_TIME_BUYER = true;
 const DEFAULT_GROUND_RENT = 500;
@@ -50,15 +65,18 @@ type InputsById = {
 const DEFAULT_INPUTS_BY_ID = {
   1: {
     isBuying: true,
-    houseValue: DEFAULT_HOUSE_VALUE,
+    houseValue: DEFAULT_HOUSE_PRICE,
     cash: DEFAULT_CASH,
     mortgage: DEFAULT_MORTGAGE,
     salary: DEFAULT_SALARY,
     salaryGrowth: DEFAULT_SALARY_GROWTH,
     rent: DEFAULT_RENT,
     rentGrowth: DEFAULT_RENT_GROWTH,
-    mortgageInterestRate: DEFAULT_MORTGAGE_INTEREST_RATE,
-    mortgageMonthlyPayment: DEFAULT_MORTGAGE_MONTHLY_PAYMENT,
+    mortgageStage1Length: DEFAULT_MORTGAGE_STAGE1_LENGTH,
+    mortgageInterestRateStage1: DEFAULT_MORTGAGE_INTEREST_RATE_STAGE1,
+    mortgageMonthlyPaymentStage1: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE1,
+    mortgageInterestRateStage2: DEFAULT_MORTGAGE_INTEREST_RATE_STAGE2,
+    mortgageMonthlyPaymentStage2: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE2,
     stockAppreciationRate: DEFAULT_STOCK_APPRECIATION_RATE,
     houseAppreciationRate: DEFAULT_HOUSE_APPRECIATION_RATE,
     yearsToForecast: DEFAULT_YEARS_TO_FORECAST,
@@ -71,15 +89,18 @@ const DEFAULT_INPUTS_BY_ID = {
   },
   2: {
     isBuying: false,
-    houseValue: DEFAULT_HOUSE_VALUE,
+    houseValue: DEFAULT_HOUSE_PRICE,
     cash: DEFAULT_CASH,
     mortgage: DEFAULT_MORTGAGE,
     salary: DEFAULT_SALARY,
     salaryGrowth: DEFAULT_SALARY_GROWTH,
     rent: DEFAULT_RENT,
     rentGrowth: DEFAULT_RENT_GROWTH,
-    mortgageInterestRate: DEFAULT_MORTGAGE_INTEREST_RATE,
-    mortgageMonthlyPayment: DEFAULT_MORTGAGE_MONTHLY_PAYMENT,
+    mortgageStage1Length: DEFAULT_MORTGAGE_STAGE1_LENGTH,
+    mortgageInterestRateStage1: DEFAULT_MORTGAGE_INTEREST_RATE_STAGE1,
+    mortgageMonthlyPaymentStage1: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE1,
+    mortgageInterestRateStage2: DEFAULT_MORTGAGE_INTEREST_RATE_STAGE2,
+    mortgageMonthlyPaymentStage2: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE2,
     stockAppreciationRate: DEFAULT_STOCK_APPRECIATION_RATE,
     houseAppreciationRate: DEFAULT_HOUSE_APPRECIATION_RATE,
     yearsToForecast: DEFAULT_YEARS_TO_FORECAST,
@@ -109,11 +130,20 @@ function makeScenario(
   const salaryGrowth$ = makeNumberObservable(propertyInputs.salaryGrowth);
   const rent$ = makeNumberObservable(propertyInputs.rent);
   const rentGrowth$ = makeNumberObservable(propertyInputs.rentGrowth);
-  const mortgageMonthlyPayment$ = makeNumberObservable(
-    propertyInputs.mortgageMonthlyPayment,
+  const mortgageStage1Length$ = makeNumberObservable(
+    propertyInputs.mortgageStage1Length,
   );
-  const mortgageInterestRate$ = makeNumberObservable(
-    propertyInputs.mortgageInterestRate,
+  const mortgageMonthlyPaymentStage1$ = makeNumberObservable(
+    propertyInputs.mortgageMonthlyPaymentStage1,
+  );
+  const mortgageMonthlyPaymentStage2$ = makeNumberObservable(
+    propertyInputs.mortgageMonthlyPaymentStage2,
+  );
+  const mortgageInterestRateStage1$ = makeNumberObservable(
+    propertyInputs.mortgageInterestRateStage1,
+  );
+  const mortgageInterestRateStage2$ = makeNumberObservable(
+    propertyInputs.mortgageInterestRateStage2,
   );
   const stockAppreciationRate$ = makeNumberObservable(
     propertyInputs.stockAppreciationRate,
@@ -180,8 +210,11 @@ function makeScenario(
     isBuying$,
     stockAppreciationRate$,
     houseAppreciationRate$,
-    mortgageInterestRate$,
-    mortgageMonthlyPayment$,
+    mortgageStage1Length$,
+    mortgageInterestRateStage1$,
+    mortgageMonthlyPaymentStage1$,
+    mortgageInterestRateStage2$,
+    mortgageMonthlyPaymentStage2$,
     yearsToForecast$,
     groundRent$,
     serviceCharge$,
@@ -196,8 +229,11 @@ function makeScenario(
         isBuying,
         stockAppreciationRate,
         houseAppreciationRate,
-        mortgageInterestRate,
-        mortgageMonthlyPayment,
+        mortgageStage1Length,
+        mortgageInterestRateStage1,
+        mortgageMonthlyPaymentStage1,
+        mortgageInterestRateStage2,
+        mortgageMonthlyPaymentStage2,
         yearsToForecast,
         groundRent,
         serviceCharge,
@@ -207,7 +243,16 @@ function makeScenario(
         const summaries = [summary0];
         let lastSummary = summary0;
 
-        for (let i = 0; i < yearsToForecast; i++) {
+        for (let i = 1; i <= yearsToForecast; i++) {
+          let mortgageMonthlyPayment: number;
+          let mortgageInterestRate: number;
+          if (i <= mortgageStage1Length) {
+            mortgageMonthlyPayment = mortgageMonthlyPaymentStage1;
+            mortgageInterestRate = mortgageInterestRateStage1;
+          } else {
+            mortgageMonthlyPayment = mortgageMonthlyPaymentStage2;
+            mortgageInterestRate = mortgageInterestRateStage2;
+          }
           const nextSummary = getNextSummary(
             lastSummary,
             salaryGrowth,
@@ -248,8 +293,11 @@ function makeScenario(
     salaryGrowth$,
     rent$,
     rentGrowth$,
-    mortgageInterestRate$,
-    mortgageMonthlyPayment$,
+    mortgageStage1Length$,
+    mortgageInterestRateStage1$,
+    mortgageMonthlyPaymentStage1$,
+    mortgageInterestRateStage2$,
+    mortgageMonthlyPaymentStage2$,
     stockAppreciationRate$,
     houseAppreciationRate$,
     yearsToForecast$,
@@ -269,8 +317,11 @@ function makeScenario(
       salaryGrowth,
       rent,
       rentGrowth,
-      mortgageInterestRate,
-      mortgageMonthlyPayment,
+      mortgageStage1Length,
+      mortgageInterestRateStage1,
+      mortgageMonthlyPaymentStage1,
+      mortgageInterestRateStage2,
+      mortgageMonthlyPaymentStage2,
       stockAppreciationRate,
       houseAppreciationRate,
       yearsToForecast,
@@ -290,8 +341,11 @@ function makeScenario(
         salaryGrowth: salaryGrowth,
         rent: rent,
         rentGrowth: rentGrowth,
-        mortgageInterestRate: mortgageInterestRate,
-        mortgageMonthlyPayment: mortgageMonthlyPayment,
+        mortgageStage1Length: mortgageStage1Length,
+        mortgageInterestRateStage1: mortgageInterestRateStage1,
+        mortgageMonthlyPaymentStage1: mortgageMonthlyPaymentStage1,
+        mortgageInterestRateStage2: mortgageInterestRateStage2,
+        mortgageMonthlyPaymentStage2: mortgageMonthlyPaymentStage2,
         stockAppreciationRate: stockAppreciationRate,
         houseAppreciationRate: houseAppreciationRate,
         yearsToForecast: yearsToForecast,

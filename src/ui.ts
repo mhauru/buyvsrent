@@ -7,8 +7,11 @@ export interface PropertyInputs {
   salaryGrowth: HTMLInputElement;
   rent: HTMLInputElement;
   rentGrowth: HTMLInputElement;
-  mortgageInterestRate: HTMLInputElement;
-  mortgageMonthlyPayment: HTMLInputElement;
+  mortgageStage1Length: HTMLInputElement;
+  mortgageInterestRateStage1: HTMLInputElement;
+  mortgageMonthlyPaymentStage1: HTMLInputElement;
+  mortgageInterestRateStage2: HTMLInputElement;
+  mortgageMonthlyPaymentStage2: HTMLInputElement;
   stockAppreciationRate: HTMLInputElement;
   houseAppreciationRate: HTMLInputElement;
   yearsToForecast: HTMLInputElement;
@@ -30,8 +33,11 @@ export type Inputs = {
   salaryGrowth: number;
   rent: number;
   rentGrowth: number;
-  mortgageInterestRate: number;
-  mortgageMonthlyPayment: number;
+  mortgageStage1Length: number;
+  mortgageInterestRateStage1: number;
+  mortgageMonthlyPaymentStage1: number;
+  mortgageInterestRateStage2: number;
+  mortgageMonthlyPaymentStage2: number;
   stockAppreciationRate: number;
   houseAppreciationRate: number;
   yearsToForecast: number;
@@ -85,38 +91,56 @@ const inputConfigs: InputConfig[] = [
     id: "salaryGrowth",
     inputType: "number",
     increment: 0.1,
-    label: "Salary growth (%), annual",
+    label: "Salary growth (%) over inflation, annual",
   },
   { id: "rent", inputType: "number", increment: 100, label: "Monthly rent" },
   {
     id: "rentGrowth",
     inputType: "number",
     increment: 0.1,
-    label: "Rent growth (%), annual",
+    label: "Rent growth (%) over inflation, annual",
   },
   {
-    id: "mortgageInterestRate",
+    id: "mortgageStage1Length",
+    inputType: "number",
+    increment: 1,
+    label: "Mortgage stage 1 length",
+  },
+  {
+    id: "mortgageInterestRateStage1",
     inputType: "number",
     increment: 0.1,
-    label: "Interest rate (%), annual",
+    label: "Interest rate (%), stage 1, annual",
   },
   {
-    id: "mortgageMonthlyPayment",
+    id: "mortgageMonthlyPaymentStage1",
     inputType: "number",
     increment: 100,
-    label: "Monthly payment",
+    label: "Monthly payment, stage 1",
+  },
+  {
+    id: "mortgageInterestRateStage2",
+    inputType: "number",
+    increment: 0.1,
+    label: "Interest rate (%), stage 2, annual",
+  },
+  {
+    id: "mortgageMonthlyPaymentStage2",
+    inputType: "number",
+    increment: 100,
+    label: "Monthly payment, stage 2",
   },
   {
     id: "stockAppreciationRate",
     inputType: "number",
     increment: 0.1,
-    label: "Stock value appreciation (%), annual",
+    label: "Stock value appreciation (%) over inflation, annual",
   },
   {
     id: "houseAppreciationRate",
     inputType: "number",
     increment: 0.1,
-    label: "House price appreciation (%), annual",
+    label: "House price growth (%) over inflation, annual",
   },
   {
     id: "yearsToForecast",
@@ -182,7 +206,14 @@ const groupConfigs: GroupConfig[] = [
     visibleWhen: "onlyIfBuying",
   },
   {
-    inputs: ["mortgage", "mortgageInterestRate", "mortgageMonthlyPayment"],
+    inputs: [
+      "mortgage",
+      "mortgageStage1Length",
+      "mortgageInterestRateStage1",
+      "mortgageMonthlyPaymentStage1",
+      "mortgageInterestRateStage2",
+      "mortgageMonthlyPaymentStage2",
+    ],
     label: "Mortgage",
     visibleWhen: "onlyIfBuying",
   },
