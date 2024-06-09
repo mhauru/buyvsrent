@@ -146,28 +146,42 @@ const inputConfigs: InputConfig[] = [
   },
 ];
 
+type VisibilityCondition = "onlyIfBuying" | "onlyIfRenting" | "always";
+
 interface GroupConfig {
   inputs: (keyof Inputs)[];
   label: string;
+  visibleWhen: VisibilityCondition;
 }
 
 const groupConfigs: GroupConfig[] = [
-  { inputs: ["isBuying", "cash", "salary"], label: "Personal finances" },
-  { inputs: ["houseValue", "buyingCosts", "firstTimeBuyer"], label: "House" },
+  {
+    inputs: ["isBuying", "cash", "salary"],
+    label: "Personal finances",
+    visibleWhen: "always",
+  },
+  {
+    inputs: ["houseValue", "buyingCosts", "firstTimeBuyer"],
+    label: "House",
+    visibleWhen: "onlyIfBuying",
+  },
   {
     inputs: ["mortgage", "mortgageInterestRate", "mortgageMonthlyPayment"],
     label: "Mortgage",
+    visibleWhen: "onlyIfBuying",
   },
   {
     inputs: ["groundRent", "serviceCharge", "maintenanceRate", "homeInsurance"],
     label: "Annual house expenses",
+    visibleWhen: "onlyIfBuying",
   },
-  { inputs: ["rent"], label: "Renting" },
+  { inputs: ["rent"], label: "Renting", visibleWhen: "onlyIfRenting" },
   {
     inputs: ["houseAppreciationRate", "stockAppreciationRate"],
     label: "Markets",
+    visibleWhen: "always",
   },
-  { inputs: ["yearsToForecast"], label: "Simulation" },
+  { inputs: ["yearsToForecast"], label: "Simulation", visibleWhen: "always" },
 ];
 
 function createLabelElement(forId: string, text: string): HTMLLabelElement {
@@ -271,6 +285,27 @@ export function createPropertyInputs(
       (inputId) => propertyInputDivs[inputId],
     );
     return createGroup(divs, groupConfig.label);
+  });
+
+  // Make some groups only be visible based on whether we are buying or renting.
+  function updateGroupVisibility(isBuying: boolean) {
+    groups.forEach((group, index) => {
+      const visibleWhen = groupConfigs[index].visibleWhen;
+      const visible =
+        visibleWhen === "always" ||
+        (visibleWhen === "onlyIfBuying" && isBuying) ||
+        (visibleWhen === "onlyIfRenting" && !isBuying);
+      group.classList.toggle("disabled", !visible);
+      group.querySelectorAll("input").forEach((input: HTMLInputElement) => {
+        input.disabled = !visible;
+      });
+    });
+  }
+
+  updateGroupVisibility(propertyInputs.isBuying.checked);
+
+  propertyInputs.isBuying.addEventListener("change", (event) => {
+    updateGroupVisibility((event.target as HTMLInputElement).checked);
   });
 
   const canvasDiv = createCanvasDivElement("canvas_div", idSuffix);

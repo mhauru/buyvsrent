@@ -6,6 +6,11 @@ body {
   flex-wrap: wrap;
 }
 
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .property-wrapper {
   display: flex;
   flex-direction: column;
