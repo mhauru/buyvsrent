@@ -3,6 +3,8 @@ const ISA_MAX_CONTRIBUTION = 20_000;
 export interface AnnualSummary {
   houseValue: number;
   cashValue: number;
+  salary: number;
+  rent: number;
   stockIsaValue: number;
   stockNonIsaValue: number;
   mortgageBalance: number;
@@ -25,14 +27,22 @@ function appreciateStockValue(
   summary.stockNonIsaValue *= 1 + stockAppreciationRate / 100.0;
 }
 
-function getSalary(summary: AnnualSummary, salary: number) {
-  summary.cashValue += salary * 12;
+function getSalary(summary: AnnualSummary) {
+  summary.cashValue += summary.salary * 12;
 }
 
-function payRent(summary: AnnualSummary, monthlyRent: number) {
-  const annualRent = monthlyRent * 12;
+function getPayRaise(summary: AnnualSummary, salaryGrowth: number) {
+  summary.salary *= 1 + salaryGrowth / 100;
+}
+
+function payRent(summary: AnnualSummary) {
+  const annualRent = summary.rent * 12;
   summary.cashValue -= annualRent;
   summary.moneySpent += annualRent;
+}
+
+function raiseRent(summary: AnnualSummary, rentGrowth: number) {
+  summary.rent *= 1 + rentGrowth / 100;
 }
 
 function payMortgage(
@@ -130,8 +140,8 @@ function checkSummary(summary: AnnualSummary) {
 
 export function getNextSummary(
   summary: AnnualSummary,
-  salary: number,
-  rent: number,
+  salaryGrowth: number,
+  rentGrowth: number,
   isBuying: boolean,
   stockAppreciationRate: number,
   houseAppreciationRate: number,
@@ -143,7 +153,7 @@ export function getNextSummary(
   maintenanceRate: number,
 ): AnnualSummary {
   const nextSummary = { ...summary };
-  getSalary(nextSummary, salary);
+  getSalary(nextSummary);
   payMortgage(nextSummary, mortgageMonthlyPayment, mortgageInterestRate);
   payRunningHouseCosts(
     nextSummary,
@@ -152,9 +162,11 @@ export function getNextSummary(
     serviceCharge,
     homeInsurance,
   );
-  if (!isBuying) payRent(nextSummary, rent);
+  if (!isBuying) payRent(nextSummary);
   appreciateHouseValue(nextSummary, houseAppreciationRate);
   appreciateStockValue(nextSummary, stockAppreciationRate);
+  getPayRaise(nextSummary, salaryGrowth);
+  raiseRent(nextSummary, rentGrowth);
   investSurplusCashInStocks(nextSummary);
   checkSummary(nextSummary);
   nextSummary.yearNumber += 1;
@@ -165,6 +177,8 @@ export function getInitialSummary(
   isBuying: boolean,
   houseValue0: number,
   cash0: number,
+  salary: number,
+  rent: number,
   mortgage0: number,
   buyingCosts: number,
   firstTimeBuyer: boolean,
@@ -172,6 +186,8 @@ export function getInitialSummary(
   const summary = {
     houseValue: 0,
     cashValue: cash0,
+    salary: salary,
+    rent: rent,
     stockIsaValue: 0,
     stockNonIsaValue: 0,
     mortgageBalance: 0,

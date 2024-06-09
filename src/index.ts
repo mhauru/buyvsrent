@@ -12,7 +12,9 @@ const DEFAULT_HOUSE_VALUE = 500_000;
 const DEFAULT_CASH = 300_000;
 const DEFAULT_MORTGAGE = 215_000;
 const DEFAULT_SALARY = 3_750;
+const DEFAULT_SALARY_GROWTH = 3;
 const DEFAULT_RENT = 2000;
+const DEFAULT_RENT_GROWTH = 3;
 const DEFAULT_MORTGAGE_INTEREST_RATE = 5;
 const DEFAULT_MORTGAGE_MONTHLY_PAYMENT = 2000;
 const DEFAULT_HOUSE_APPRECIATION_RATE = 3;
@@ -52,7 +54,9 @@ const DEFAULT_INPUTS_BY_ID = {
     cash: DEFAULT_CASH,
     mortgage: DEFAULT_MORTGAGE,
     salary: DEFAULT_SALARY,
+    salaryGrowth: DEFAULT_SALARY_GROWTH,
     rent: DEFAULT_RENT,
+    rentGrowth: DEFAULT_RENT_GROWTH,
     mortgageInterestRate: DEFAULT_MORTGAGE_INTEREST_RATE,
     mortgageMonthlyPayment: DEFAULT_MORTGAGE_MONTHLY_PAYMENT,
     stockAppreciationRate: DEFAULT_STOCK_APPRECIATION_RATE,
@@ -71,7 +75,9 @@ const DEFAULT_INPUTS_BY_ID = {
     cash: DEFAULT_CASH,
     mortgage: DEFAULT_MORTGAGE,
     salary: DEFAULT_SALARY,
+    salaryGrowth: DEFAULT_SALARY_GROWTH,
     rent: DEFAULT_RENT,
+    rentGrowth: DEFAULT_RENT_GROWTH,
     mortgageInterestRate: DEFAULT_MORTGAGE_INTEREST_RATE,
     mortgageMonthlyPayment: DEFAULT_MORTGAGE_MONTHLY_PAYMENT,
     stockAppreciationRate: DEFAULT_STOCK_APPRECIATION_RATE,
@@ -100,7 +106,9 @@ function makeScenario(
   const cash0$ = makeNumberObservable(propertyInputs.cash);
   const mortgage0$ = makeNumberObservable(propertyInputs.mortgage);
   const salary$ = makeNumberObservable(propertyInputs.salary);
+  const salaryGrowth$ = makeNumberObservable(propertyInputs.salaryGrowth);
   const rent$ = makeNumberObservable(propertyInputs.rent);
+  const rentGrowth$ = makeNumberObservable(propertyInputs.rentGrowth);
   const mortgageMonthlyPayment$ = makeNumberObservable(
     propertyInputs.mortgageMonthlyPayment,
   );
@@ -125,13 +133,26 @@ function makeScenario(
     isBuying$,
     houseValue0$,
     cash0$,
+    salary$,
+    rent$,
     mortgage0$,
     buyingCosts$,
     firstTimeBuyer$,
   ]).pipe(
     map(
-      ([isBuying, houseValue0, cash0, mortgage0, buyingCosts, firstTimeBuyer]: [
+      ([
+        isBuying,
+        houseValue0,
+        cash0,
+        salary,
+        rent,
+        mortgage0,
+        buyingCosts,
+        firstTimeBuyer,
+      ]: [
         boolean,
+        number,
+        number,
         number,
         number,
         number,
@@ -142,6 +163,8 @@ function makeScenario(
           isBuying,
           houseValue0,
           cash0,
+          salary,
+          rent,
           mortgage0,
           buyingCosts,
           firstTimeBuyer,
@@ -152,8 +175,8 @@ function makeScenario(
 
   const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
     summary0$,
-    salary$,
-    rent$,
+    salaryGrowth$,
+    rentGrowth$,
     isBuying$,
     stockAppreciationRate$,
     houseAppreciationRate$,
@@ -168,8 +191,8 @@ function makeScenario(
     map(
       ([
         summary0,
-        salary,
-        rent,
+        salaryGrowth,
+        rentGrowth,
         isBuying,
         stockAppreciationRate,
         houseAppreciationRate,
@@ -187,8 +210,8 @@ function makeScenario(
         for (let i = 0; i < yearsToForecast; i++) {
           const nextSummary = getNextSummary(
             lastSummary,
-            salary,
-            rent,
+            salaryGrowth,
+            rentGrowth,
             isBuying,
             stockAppreciationRate,
             houseAppreciationRate,
@@ -222,7 +245,9 @@ function makeScenario(
     cash0$,
     mortgage0$,
     salary$,
+    salaryGrowth$,
     rent$,
+    rentGrowth$,
     mortgageInterestRate$,
     mortgageMonthlyPayment$,
     stockAppreciationRate$,
@@ -241,7 +266,9 @@ function makeScenario(
       cash0,
       mortgage0,
       salary,
+      salaryGrowth,
       rent,
+      rentGrowth,
       mortgageInterestRate,
       mortgageMonthlyPayment,
       stockAppreciationRate,
@@ -260,7 +287,9 @@ function makeScenario(
         cash: cash0,
         mortgage: mortgage0,
         salary: salary,
+        salaryGrowth: salaryGrowth,
         rent: rent,
+        rentGrowth: rentGrowth,
         mortgageInterestRate: mortgageInterestRate,
         mortgageMonthlyPayment: mortgageMonthlyPayment,
         stockAppreciationRate: stockAppreciationRate,

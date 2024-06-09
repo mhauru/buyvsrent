@@ -4,7 +4,9 @@ export interface PropertyInputs {
   cash: HTMLInputElement;
   mortgage: HTMLInputElement;
   salary: HTMLInputElement;
+  salaryGrowth: HTMLInputElement;
   rent: HTMLInputElement;
+  rentGrowth: HTMLInputElement;
   mortgageInterestRate: HTMLInputElement;
   mortgageMonthlyPayment: HTMLInputElement;
   stockAppreciationRate: HTMLInputElement;
@@ -25,7 +27,9 @@ export type Inputs = {
   cash: number;
   mortgage: number;
   salary: number;
+  salaryGrowth: number;
   rent: number;
+  rentGrowth: number;
   mortgageInterestRate: number;
   mortgageMonthlyPayment: number;
   stockAppreciationRate: number;
@@ -77,7 +81,19 @@ const inputConfigs: InputConfig[] = [
     increment: 100,
     label: "Available monthly salary",
   },
+  {
+    id: "salaryGrowth",
+    inputType: "number",
+    increment: 0.1,
+    label: "Salary growth (%), annual",
+  },
   { id: "rent", inputType: "number", increment: 100, label: "Monthly rent" },
+  {
+    id: "rentGrowth",
+    inputType: "number",
+    increment: 0.1,
+    label: "Rent growth (%), annual",
+  },
   {
     id: "mortgageInterestRate",
     inputType: "number",
@@ -156,7 +172,7 @@ interface GroupConfig {
 
 const groupConfigs: GroupConfig[] = [
   {
-    inputs: ["isBuying", "cash", "salary"],
+    inputs: ["isBuying", "cash", "salary", "salaryGrowth"],
     label: "Personal finances",
     visibleWhen: "always",
   },
@@ -175,7 +191,11 @@ const groupConfigs: GroupConfig[] = [
     label: "Annual house expenses",
     visibleWhen: "onlyIfBuying",
   },
-  { inputs: ["rent"], label: "Renting", visibleWhen: "onlyIfRenting" },
+  {
+    inputs: ["rent", "rentGrowth"],
+    label: "Renting",
+    visibleWhen: "onlyIfRenting",
+  },
   {
     inputs: ["houseAppreciationRate", "stockAppreciationRate"],
     label: "Markets",
