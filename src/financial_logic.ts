@@ -26,7 +26,7 @@ function appreciateStockValue(
 }
 
 function getSalary(summary: AnnualSummary, salary: number) {
-  summary.cashValue += salary;
+  summary.cashValue += salary * 12;
 }
 
 function payRent(summary: AnnualSummary, monthlyRent: number) {

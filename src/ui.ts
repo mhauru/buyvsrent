@@ -75,7 +75,7 @@ const inputConfigs: InputConfig[] = [
     id: "salary",
     inputType: "number",
     increment: 100,
-    label: "Net annual salary",
+    label: "Available monthly salary",
   },
   { id: "rent", inputType: "number", increment: 100, label: "Monthly rent" },
   {
