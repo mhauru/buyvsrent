@@ -39,6 +39,137 @@ export type Inputs = {
   homeInsurance: number;
 };
 
+interface InputConfig {
+  id: keyof Inputs;
+  inputType: "checkbox" | "number";
+  increment: number | string;
+  label: string;
+}
+
+const inputConfigs: InputConfig[] = [
+  {
+    id: "isBuying",
+    inputType: "checkbox",
+    increment: 1000,
+    label: "Buying instead of renting",
+  },
+  {
+    id: "houseValue",
+    inputType: "number",
+    increment: 1000,
+    label: "House price",
+  },
+  {
+    id: "cash",
+    inputType: "number",
+    increment: 1000,
+    label: "Cash at start",
+  },
+  {
+    id: "mortgage",
+    inputType: "number",
+    increment: 1000,
+    label: "Mortgage",
+  },
+  {
+    id: "salary",
+    inputType: "number",
+    increment: 100,
+    label: "Net annual salary",
+  },
+  { id: "rent", inputType: "number", increment: 100, label: "Monthly rent" },
+  {
+    id: "mortgageInterestRate",
+    inputType: "number",
+    increment: 0.1,
+    label: "Interest rate (%), annual",
+  },
+  {
+    id: "mortgageMonthlyPayment",
+    inputType: "number",
+    increment: 100,
+    label: "Monthly payment",
+  },
+  {
+    id: "stockAppreciationRate",
+    inputType: "number",
+    increment: 0.1,
+    label: "Stock value appreciation (%), annual",
+  },
+  {
+    id: "houseAppreciationRate",
+    inputType: "number",
+    increment: 0.1,
+    label: "House price appreciation (%), annual",
+  },
+  {
+    id: "yearsToForecast",
+    inputType: "number",
+    increment: 1,
+    label: "Years to forecast",
+  },
+  {
+    id: "buyingCosts",
+    inputType: "number",
+    increment: 100,
+    label: "Buying costs (survey, conveyancing fee, etc.)",
+  },
+  {
+    id: "firstTimeBuyer",
+    inputType: "checkbox",
+    increment: "",
+    label: "First time buyer",
+  },
+  {
+    id: "groundRent",
+    inputType: "number",
+    increment: 50,
+    label: "Ground rent",
+  },
+  {
+    id: "serviceCharge",
+    inputType: "number",
+    increment: 100,
+    label: "Service charge",
+  },
+  {
+    id: "maintenanceRate",
+    inputType: "number",
+    increment: 0.1,
+    label: "Maintenance costs, % of value",
+  },
+  {
+    id: "homeInsurance",
+    inputType: "number",
+    increment: 50,
+    label: "Home insurance",
+  },
+];
+
+interface GroupConfig {
+  inputs: (keyof Inputs)[];
+  label: string;
+}
+
+const groupConfigs: GroupConfig[] = [
+  { inputs: ["isBuying", "cash", "salary"], label: "Personal finances" },
+  { inputs: ["houseValue", "buyingCosts", "firstTimeBuyer"], label: "House" },
+  {
+    inputs: ["mortgage", "mortgageInterestRate", "mortgageMonthlyPayment"],
+    label: "Mortgage",
+  },
+  {
+    inputs: ["groundRent", "serviceCharge", "maintenanceRate", "homeInsurance"],
+    label: "Annual house expenses",
+  },
+  { inputs: ["rent"], label: "Renting" },
+  {
+    inputs: ["houseAppreciationRate", "stockAppreciationRate"],
+    label: "Markets",
+  },
+  { inputs: ["yearsToForecast"], label: "Simulation" },
+];
+
 function createLabelElement(forId: string, text: string): HTMLLabelElement {
   const label = document.createElement("label");
   label.htmlFor = forId;
@@ -84,11 +215,20 @@ function createInputDiv(
   return [inputElement, div];
 }
 
-function createGroup(subdivs: Array<HTMLDivElement>): HTMLDivElement {
-  const div = document.createElement("div");
-  subdivs.forEach((sd) => div.appendChild(sd));
-  div.classList.add("input-group");
-  return div;
+function createGroup(
+  subdivs: Array<HTMLDivElement>,
+  title: string,
+): HTMLDivElement {
+  const divInner = document.createElement("div");
+  const divOuter = document.createElement("div");
+  const header = document.createElement("h1");
+  header.innerHTML = title;
+  divOuter.appendChild(header);
+  divOuter.appendChild(divInner);
+  subdivs.forEach((sd) => divInner.appendChild(sd));
+  divOuter.classList.add("input-group-outer");
+  divInner.classList.add("input-group");
+  return divOuter;
 }
 
 function createCanvasDivElement(id: string, idSuffix: number): HTMLDivElement {
@@ -109,160 +249,29 @@ export function createPropertyInputs(
   idSuffix: number,
   inputs: Inputs,
 ): PropertyInputs {
-  const [isBuying, isBuyingDiv] = createInputDiv(
-    "is_buying",
-    idSuffix,
-    "checkbox",
-    inputs.isBuying,
-    1000,
-    "Buying instead of renting",
-  );
-  const [houseValue, houseValueDiv] = createInputDiv(
-    "house_value",
-    idSuffix,
-    "number",
-    inputs.houseValue,
-    1000,
-    "House value at purchase",
-  );
-  const [cash, cashDiv] = createInputDiv(
-    "cash",
-    idSuffix,
-    "number",
-    inputs.cash,
-    1000,
-    "Cash at purchase",
-  );
-  const [mortgage, mortgageDiv] = createInputDiv(
-    "mortgage",
-    idSuffix,
-    "number",
-    inputs.mortgage,
-    1000,
-    "Initial mortgage",
-  );
-  const [salary, salaryDiv] = createInputDiv(
-    "salary",
-    idSuffix,
-    "number",
-    inputs.salary,
-    100,
-    "Net annual salary",
-  );
-  const [rent, rentDiv] = createInputDiv(
-    "rent",
-    idSuffix,
-    "number",
-    inputs.rent,
-    100,
-    "Monthly rent",
-  );
-  const [mortgageInterestRate, mortgageInterestRateDiv] = createInputDiv(
-    "mortgage_interest_rate",
-    idSuffix,
-    "number",
-    inputs.mortgageInterestRate,
-    0.1,
-    "Mortgage interest rate (%), annual",
-  );
-  const [mortgageMonthlyPayment, mortgageMonthlyPaymentDiv] = createInputDiv(
-    "mortgage_monthly_payment",
-    idSuffix,
-    "number",
-    inputs.mortgageMonthlyPayment,
-    100,
-    "Mortgage payment, monthly",
-  );
-  const [stockAppreciationRate, stockAppreciationRateDiv] = createInputDiv(
-    "stock_appreciation_rate",
-    idSuffix,
-    "number",
-    inputs.stockAppreciationRate,
-    0.1,
-    "Stock value appreciation (%), annual",
-  );
-  const [houseAppreciationRate, houseAppreciationRateDiv] = createInputDiv(
-    "house_appreciation_rate",
-    idSuffix,
-    "number",
-    inputs.houseAppreciationRate,
-    0.1,
-    "House price appreciation (%), annual",
-  );
-  const [yearsToForecast, yearsToForecastDiv] = createInputDiv(
-    "years_to_forecast",
-    idSuffix,
-    "number",
-    inputs.yearsToForecast,
-    1,
-    "Years to forecast",
-  );
-  const [buyingCosts, buyingCostsDiv] = createInputDiv(
-    "buying_costs",
-    idSuffix,
-    "number",
-    inputs.buyingCosts,
-    100,
-    "Buying costs (survey, conveyancing fee, etc.)",
-  );
-  const [firstTimeBuyer, firstTimeBuyerDiv] = createInputDiv(
-    "first_time_buyer",
-    idSuffix,
-    "checkbox",
-    inputs.firstTimeBuyer,
-    "",
-    "First time buyer",
-  );
-  const [groundRent, groundRentDiv] = createInputDiv(
-    "ground_rent",
-    idSuffix,
-    "number",
-    inputs.groundRent,
-    50,
-    "Ground rent, annual",
-  );
-  const [serviceCharge, serviceChargeDiv] = createInputDiv(
-    "service_charge",
-    idSuffix,
-    "number",
-    inputs.serviceCharge,
-    100,
-    "Service charge, annual",
-  );
-  const [maintenanceRate, maintenanceRateDiv] = createInputDiv(
-    "maintenance_rate",
-    idSuffix,
-    "number",
-    inputs.maintenanceRate,
-    0.1,
-    "Maintenance costs, % of value, annual",
-  );
-  const [homeInsurance, homeInsuranceDiv] = createInputDiv(
-    "home_insurance",
-    idSuffix,
-    "number",
-    inputs.homeInsurance,
-    50,
-    "Home insurance, annual",
-  );
+  const propertyInputs: { [key in keyof Inputs]: HTMLInputElement } = {} as any;
+  const propertyInputDivs: { [key in keyof Inputs]: HTMLDivElement } =
+    {} as any;
 
-  const groups = [
-    createGroup([isBuyingDiv, cashDiv, salaryDiv, yearsToForecastDiv]),
-    createGroup([houseValueDiv, buyingCostsDiv, firstTimeBuyerDiv]),
-    createGroup([
-      mortgageDiv,
-      mortgageInterestRateDiv,
-      mortgageMonthlyPaymentDiv,
-    ]),
-    createGroup([
-      groundRentDiv,
-      serviceChargeDiv,
-      maintenanceRateDiv,
-      homeInsuranceDiv,
-    ]),
-    createGroup([rentDiv]),
-    createGroup([houseAppreciationRateDiv, stockAppreciationRateDiv]),
-  ];
+  inputConfigs.forEach((config) => {
+    const [input, inputDiv] = createInputDiv(
+      config.id,
+      idSuffix,
+      config.inputType,
+      inputs[config.id],
+      config.increment,
+      config.label,
+    );
+    propertyInputs[config.id] = input;
+    propertyInputDivs[config.id] = inputDiv;
+  });
+
+  const groups = groupConfigs.map((groupConfig) => {
+    const divs = groupConfig.inputs.map(
+      (inputId) => propertyInputDivs[inputId],
+    );
+    return createGroup(divs, groupConfig.label);
+  });
 
   const canvasDiv = createCanvasDivElement("canvas_div", idSuffix);
   const canvas = createCanvasElement("canvas", idSuffix);
@@ -279,24 +288,5 @@ export function createPropertyInputs(
 
   document.body.appendChild(wrapperDiv);
 
-  return {
-    isBuying,
-    houseValue,
-    cash,
-    mortgage,
-    salary,
-    rent,
-    mortgageInterestRate,
-    mortgageMonthlyPayment,
-    stockAppreciationRate,
-    houseAppreciationRate,
-    yearsToForecast,
-    buyingCosts,
-    firstTimeBuyer,
-    groundRent,
-    serviceCharge,
-    maintenanceRate,
-    homeInsurance,
-    canvas,
-  };
+  return { ...propertyInputs, canvas: canvas };
 }
