@@ -9,7 +9,7 @@ import { Inputs, PropertyInputs, createPropertyInputs } from "./ui";
 import { MinMaxObject, createPlot } from "./plots";
 
 const DEFAULT_HOUSE_PRICE = 500_000;
-const DEFAULT_CASH = 300_000;
+const DEFAULT_CASH = 310_000;
 const DEFAULT_MORTGAGE = 200_000;
 const DEFAULT_SALARY = 3_750;
 const DEFAULT_SALARY_GROWTH = 5;

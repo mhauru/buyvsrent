@@ -134,7 +134,7 @@ const inputConfigs: InputConfig[] = [
     id: "stockAppreciationRate",
     inputType: "number",
     increment: 0.1,
-    label: "Stock value appreciation (%) over inflation, annual",
+    label: "Stocks value appreciation (%) over inflation, annual",
   },
   {
     id: "houseAppreciationRate",

@@ -54,7 +54,7 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
       const cashValues = summaries.map((s, i) => {
         return { x: i, y: s.cashValue };
       });
-      const postTaxStockValues = summaries.map((s, i) => {
+      const postTaxStocksValues = summaries.map((s, i) => {
         return {
           x: i,
           y: s.stockIsaValue + s.stockNonIsaValue - computeCapitalGainsTax(s),
@@ -79,8 +79,8 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
           showLine: true,
         },
         {
-          label: "Stock post tax",
-          data: postTaxStockValues,
+          label: "Stocks post tax",
+          data: postTaxStocksValues,
           showLine: true,
         },
         {
