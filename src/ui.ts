@@ -12,6 +12,7 @@ export interface PropertyInputs {
   mortgageMonthlyPaymentStage1: HTMLInputElement;
   mortgageInterestRateStage2: HTMLInputElement;
   mortgageMonthlyPaymentStage2: HTMLInputElement;
+  mortgageOverpay: HTMLInputElement;
   stockAppreciationRate: HTMLInputElement;
   houseAppreciationRate: HTMLInputElement;
   yearsToForecast: HTMLInputElement;
@@ -38,6 +39,7 @@ export type Inputs = {
   mortgageMonthlyPaymentStage1: number;
   mortgageInterestRateStage2: number;
   mortgageMonthlyPaymentStage2: number;
+  mortgageOverpay: boolean;
   stockAppreciationRate: number;
   houseAppreciationRate: number;
   yearsToForecast: number;
@@ -91,14 +93,14 @@ const inputConfigs: InputConfig[] = [
     id: "salaryGrowth",
     inputType: "number",
     increment: 0.1,
-    label: "Salary growth (%) over inflation, annual",
+    label: "Salary growth (%), annual",
   },
   { id: "rent", inputType: "number", increment: 100, label: "Monthly rent" },
   {
     id: "rentGrowth",
     inputType: "number",
     increment: 0.1,
-    label: "Rent growth (%) over inflation, annual",
+    label: "Rent growth (%), annual",
   },
   {
     id: "mortgageStage1Length",
@@ -131,16 +133,22 @@ const inputConfigs: InputConfig[] = [
     label: "Monthly payment, stage 2",
   },
   {
+    id: "mortgageOverpay",
+    inputType: "checkbox",
+    increment: "",
+    label: "Overpay when possible",
+  },
+  {
     id: "stockAppreciationRate",
     inputType: "number",
     increment: 0.1,
-    label: "Stocks value appreciation (%) over inflation, annual",
+    label: "Stocks value appreciation (%), annual",
   },
   {
     id: "houseAppreciationRate",
     inputType: "number",
     increment: 0.1,
-    label: "House price growth (%) over inflation, annual",
+    label: "House price growth (%), annual",
   },
   {
     id: "yearsToForecast",
@@ -213,6 +221,7 @@ const groupConfigs: GroupConfig[] = [
       "mortgageMonthlyPaymentStage1",
       "mortgageInterestRateStage2",
       "mortgageMonthlyPaymentStage2",
+      "mortgageOverpay",
     ],
     label: "Mortgage",
     visibleWhen: "onlyIfBuying",

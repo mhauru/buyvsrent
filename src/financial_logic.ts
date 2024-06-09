@@ -80,6 +80,13 @@ function payRunningHouseCosts(
   summary.moneySpent += totalOutgoings;
 }
 
+function overpayMortgage(summary: AnnualSummary) {
+  if (summary.cashValue < 0) return;
+  const overpayment = Math.min(summary.cashValue, summary.mortgageBalance);
+  summary.cashValue -= overpayment;
+  summary.mortgageBalance -= overpayment;
+}
+
 function investSurplusCashInStocks(summary: AnnualSummary) {
   if (summary.cashValue < 0) return;
   const isaInvestment = Math.min(summary.cashValue, ISA_MAX_CONTRIBUTION);
@@ -153,6 +160,7 @@ export function getNextSummary(
   houseAppreciationRate: number,
   mortgageInterestRate: number,
   mortgageMonthlyPayment: number,
+  mortgageOverpay: boolean,
   groundRent: number,
   serviceCharge: number,
   homeInsurance: number,
@@ -173,6 +181,7 @@ export function getNextSummary(
   appreciateStockValue(nextSummary, stockAppreciationRate);
   getPayRaise(nextSummary, salaryGrowth);
   raiseRent(nextSummary, rentGrowth);
+  if (mortgageOverpay) overpayMortgage(nextSummary);
   investSurplusCashInStocks(nextSummary);
   checkSummary(nextSummary);
   nextSummary.yearNumber += 1;

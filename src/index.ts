@@ -11,8 +11,8 @@ import { MinMaxObject, createPlot } from "./plots";
 const DEFAULT_HOUSE_PRICE = 500_000;
 const DEFAULT_CASH = 310_000;
 const DEFAULT_MORTGAGE = 200_000;
-const DEFAULT_SALARY = 3_750;
-const DEFAULT_SALARY_GROWTH = 5;
+const DEFAULT_SALARY = 2_500;
+const DEFAULT_SALARY_GROWTH = 7;
 // The average gross rental yield, i.e. annual rent divided by house price, is around
 // 4.5% in London.
 // Source: https://www.trackcapital.co.uk/news-articles/uk-buy-to-let-yield-map/
@@ -24,14 +24,15 @@ const DEFAULT_MORTGAGE_INTEREST_RATE_STAGE1 = 6.14;
 const DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE1 = 1450;
 const DEFAULT_MORTGAGE_INTEREST_RATE_STAGE2 = 7.99;
 const DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE2 = 1650;
+const DEFAULT_MORTGAGE_OVERPAY = true;
 // House prices in London grew on average 4.4% between Jan 2005 and Jan 2024.
 // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/housepriceindex/latest
-// CPIH grew by 2.9% in the same time.
-// Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23
-// Hence 1.5% for house price apprecation.
-const DEFAULT_HOUSE_APPRECIATION_RATE = 1.5;
+const DEFAULT_HOUSE_APPRECIATION_RATE = 4.4;
 // Often quoted numbers for historical stock price growth are 6% and 7% over inflation.
-const DEFAULT_STOCK_APPRECIATION_RATE = 6;
+// CPIH grew by 2.9% annualised between January 2005 and Jan 2024.
+// Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23
+// BoE target is 2% inflation.
+const DEFAULT_STOCK_APPRECIATION_RATE = 9;
 // Rents are assumed to grow at the same rate as house prices. See above for house prices.
 const DEFAULT_RENT_GROWTH = DEFAULT_HOUSE_APPRECIATION_RATE;
 const DEFAULT_YEARS_TO_FORECAST = 20;
@@ -77,6 +78,7 @@ const DEFAULT_INPUTS_BY_ID = {
     mortgageMonthlyPaymentStage1: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE1,
     mortgageInterestRateStage2: DEFAULT_MORTGAGE_INTEREST_RATE_STAGE2,
     mortgageMonthlyPaymentStage2: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE2,
+    mortgageOverpay: DEFAULT_MORTGAGE_OVERPAY,
     stockAppreciationRate: DEFAULT_STOCK_APPRECIATION_RATE,
     houseAppreciationRate: DEFAULT_HOUSE_APPRECIATION_RATE,
     yearsToForecast: DEFAULT_YEARS_TO_FORECAST,
@@ -101,6 +103,7 @@ const DEFAULT_INPUTS_BY_ID = {
     mortgageMonthlyPaymentStage1: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE1,
     mortgageInterestRateStage2: DEFAULT_MORTGAGE_INTEREST_RATE_STAGE2,
     mortgageMonthlyPaymentStage2: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE2,
+    mortgageOverpay: DEFAULT_MORTGAGE_OVERPAY,
     stockAppreciationRate: DEFAULT_STOCK_APPRECIATION_RATE,
     houseAppreciationRate: DEFAULT_HOUSE_APPRECIATION_RATE,
     yearsToForecast: DEFAULT_YEARS_TO_FORECAST,
@@ -136,14 +139,17 @@ function makeScenario(
   const mortgageMonthlyPaymentStage1$ = makeNumberObservable(
     propertyInputs.mortgageMonthlyPaymentStage1,
   );
-  const mortgageMonthlyPaymentStage2$ = makeNumberObservable(
-    propertyInputs.mortgageMonthlyPaymentStage2,
-  );
   const mortgageInterestRateStage1$ = makeNumberObservable(
     propertyInputs.mortgageInterestRateStage1,
   );
+  const mortgageMonthlyPaymentStage2$ = makeNumberObservable(
+    propertyInputs.mortgageMonthlyPaymentStage2,
+  );
   const mortgageInterestRateStage2$ = makeNumberObservable(
     propertyInputs.mortgageInterestRateStage2,
+  );
+  const mortgageOverpay$ = makeBooleanObservable(
+    propertyInputs.mortgageOverpay,
   );
   const stockAppreciationRate$ = makeNumberObservable(
     propertyInputs.stockAppreciationRate,
@@ -215,6 +221,7 @@ function makeScenario(
     mortgageMonthlyPaymentStage1$,
     mortgageInterestRateStage2$,
     mortgageMonthlyPaymentStage2$,
+    mortgageOverpay$,
     yearsToForecast$,
     groundRent$,
     serviceCharge$,
@@ -234,6 +241,7 @@ function makeScenario(
         mortgageMonthlyPaymentStage1,
         mortgageInterestRateStage2,
         mortgageMonthlyPaymentStage2,
+        mortgageOverpay,
         yearsToForecast,
         groundRent,
         serviceCharge,
@@ -262,6 +270,7 @@ function makeScenario(
             houseAppreciationRate,
             mortgageInterestRate,
             mortgageMonthlyPayment,
+            mortgageOverpay,
             groundRent,
             serviceCharge,
             homeInsurance,
@@ -298,6 +307,7 @@ function makeScenario(
     mortgageMonthlyPaymentStage1$,
     mortgageInterestRateStage2$,
     mortgageMonthlyPaymentStage2$,
+    mortgageOverpay$,
     stockAppreciationRate$,
     houseAppreciationRate$,
     yearsToForecast$,
@@ -322,6 +332,7 @@ function makeScenario(
       mortgageMonthlyPaymentStage1,
       mortgageInterestRateStage2,
       mortgageMonthlyPaymentStage2,
+      mortgageOverpay,
       stockAppreciationRate,
       houseAppreciationRate,
       yearsToForecast,
@@ -346,6 +357,7 @@ function makeScenario(
         mortgageMonthlyPaymentStage1: mortgageMonthlyPaymentStage1,
         mortgageInterestRateStage2: mortgageInterestRateStage2,
         mortgageMonthlyPaymentStage2: mortgageMonthlyPaymentStage2,
+        mortgageOverpay: mortgageOverpay,
         stockAppreciationRate: stockAppreciationRate,
         houseAppreciationRate: houseAppreciationRate,
         yearsToForecast: yearsToForecast,
