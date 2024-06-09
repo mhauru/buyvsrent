@@ -1,4 +1,7 @@
 const ISA_MAX_CONTRIBUTION = 20_000;
+const CAPITAL_GAINS_ALLOWANCE = 3_000;
+// TODO This only holds if you are in one of the >50k income tax brackets.
+const CAPITAL_GAINS_RATE = 20;
 
 export interface AnnualSummary {
   houseValue: number;
@@ -7,6 +10,7 @@ export interface AnnualSummary {
   rent: number;
   stockIsaValue: number;
   stockNonIsaValue: number;
+  stockNonIsaValuePaid: number;
   mortgageBalance: number;
   moneySpent: number;
   yearNumber: number;
@@ -83,6 +87,7 @@ function investSurplusCashInStocks(summary: AnnualSummary) {
   summary.cashValue -= isaInvestment + nonIsaInvestment;
   summary.stockIsaValue += isaInvestment;
   summary.stockNonIsaValue += nonIsaInvestment;
+  summary.stockNonIsaValuePaid += nonIsaInvestment;
 }
 
 function computeStampDuty(houseValue: number, firstTimeBuyer: boolean): number {
@@ -128,6 +133,7 @@ function goBankrupt(summary: AnnualSummary) {
   summary.cashValue = NaN;
   summary.stockIsaValue = NaN;
   summary.stockNonIsaValue = NaN;
+  summary.stockNonIsaValuePaid = NaN;
   summary.mortgageBalance = NaN;
   summary.moneySpent = NaN;
 }
@@ -190,6 +196,7 @@ export function getInitialSummary(
     rent: rent,
     stockIsaValue: 0,
     stockNonIsaValue: 0,
+    stockNonIsaValuePaid: 0,
     mortgageBalance: 0,
     yearNumber: 0,
     moneySpent: 0,
@@ -199,4 +206,11 @@ export function getInitialSummary(
   investSurplusCashInStocks(summary);
   checkSummary(summary);
   return summary;
+}
+
+export function computeCapitalGainsTax(summary: AnnualSummary) {
+  const gain = summary.stockNonIsaValue - summary.stockNonIsaValuePaid;
+  return (
+    (Math.max(gain - CAPITAL_GAINS_ALLOWANCE, 0) * CAPITAL_GAINS_RATE) / 100
+  );
 }

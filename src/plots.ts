@@ -13,7 +13,7 @@ import {
   LinearScale,
   CategoryScale,
 } from "chart.js";
-import { AnnualSummary } from "./financial_logic";
+import { AnnualSummary, computeCapitalGainsTax } from "./financial_logic";
 
 export type MinMaxObject = {
   minY: { [key: number]: number };
@@ -36,7 +36,7 @@ interface Dataset {
 export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
   const datasets$: Observable<Array<Dataset>> = summaries$.pipe(
     map((summaries: Array<AnnualSummary>) => {
-      const wealths = summaries.map((s, i) => {
+      const postTaxWealths = summaries.map((s, i) => {
         return {
           x: i,
           y:
@@ -44,7 +44,8 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
             s.cashValue +
             s.stockIsaValue +
             s.stockNonIsaValue -
-            s.mortgageBalance,
+            s.mortgageBalance -
+            computeCapitalGainsTax(s),
         };
       });
       const mortgageBalances = summaries.map((s, i) => {
@@ -53,8 +54,11 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
       const cashValues = summaries.map((s, i) => {
         return { x: i, y: s.cashValue };
       });
-      const stockValues = summaries.map((s, i) => {
-        return { x: i, y: s.stockIsaValue + s.stockNonIsaValue };
+      const postTaxStockValues = summaries.map((s, i) => {
+        return {
+          x: i,
+          y: s.stockIsaValue + s.stockNonIsaValue - computeCapitalGainsTax(s),
+        };
       });
       const houseValues = summaries.map((s, i) => {
         return { x: i, y: s.houseValue };
@@ -65,8 +69,8 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
 
       return [
         {
-          label: "Total wealth",
-          data: wealths,
+          label: "Total wealth post tax",
+          data: postTaxWealths,
           showLine: true,
         },
         {
@@ -75,8 +79,8 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
           showLine: true,
         },
         {
-          label: "Stock",
-          data: stockValues,
+          label: "Stock post tax",
+          data: postTaxStockValues,
           showLine: true,
         },
         {
