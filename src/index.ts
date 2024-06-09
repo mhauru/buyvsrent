@@ -17,8 +17,6 @@ const DEFAULT_SALARY_GROWTH = 5;
 // 4.5% in London.
 // Source: https://www.trackcapital.co.uk/news-articles/uk-buy-to-let-yield-map/
 const DEFAULT_RENT = (DEFAULT_HOUSE_PRICE * 0.045) / 12;
-// Rents are assumed to grow at the same rate as house prices. See below for house prices.
-const DEFAULT_RENT_GROWTH = 1.5;
 // These are numbers I got from a Nationwide calculator for 500k house with 200k mortgage
 // on 2024-06-09, rounded a bit.
 const DEFAULT_MORTGAGE_STAGE1_LENGTH = 2;
@@ -34,6 +32,8 @@ const DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE2 = 1650;
 const DEFAULT_HOUSE_APPRECIATION_RATE = 1.5;
 // Often quoted numbers for historical stock price growth are 6% and 7% over inflation.
 const DEFAULT_STOCK_APPRECIATION_RATE = 6;
+// Rents are assumed to grow at the same rate as house prices. See above for house prices.
+const DEFAULT_RENT_GROWTH = DEFAULT_HOUSE_APPRECIATION_RATE;
 const DEFAULT_YEARS_TO_FORECAST = 20;
 const DEFAULT_BUYING_COSTS = 2500;
 const DEFAULT_FIRST_TIME_BUYER = true;
