@@ -1,33 +1,6 @@
-export interface PropertyInputs {
-  isBuying: HTMLInputElement;
-  houseValue: HTMLInputElement;
-  cash: HTMLInputElement;
-  mortgage: HTMLInputElement;
-  salary: HTMLInputElement;
-  salaryGrowth: HTMLInputElement;
-  rent: HTMLInputElement;
-  rentGrowth: HTMLInputElement;
-  mortgageStage1Length: HTMLInputElement;
-  mortgageInterestRateStage1: HTMLInputElement;
-  mortgageMonthlyPaymentStage1: HTMLInputElement;
-  mortgageInterestRateStage2: HTMLInputElement;
-  mortgageMonthlyPaymentStage2: HTMLInputElement;
-  mortgageOverpay: HTMLInputElement;
-  stockAppreciationRate: HTMLInputElement;
-  houseAppreciationRate: HTMLInputElement;
-  yearsToForecast: HTMLInputElement;
-  buyingCosts: HTMLInputElement;
-  firstTimeBuyer: HTMLInputElement;
-  groundRent: HTMLInputElement;
-  serviceCharge: HTMLInputElement;
-  maintenanceRate: HTMLInputElement;
-  homeInsurance: HTMLInputElement;
-  canvas: HTMLCanvasElement;
-}
-
 export type Inputs = {
   isBuying: boolean;
-  houseValue: number;
+  housePrice: number;
   cash: number;
   mortgage: number;
   salary: number;
@@ -51,6 +24,10 @@ export type Inputs = {
   homeInsurance: number;
 };
 
+export type PropertyInputs = {
+  [K in keyof Inputs]: HTMLInputElement;
+};
+
 interface InputConfig {
   id: keyof Inputs;
   inputType: "checkbox" | "number";
@@ -66,7 +43,7 @@ const inputConfigs: InputConfig[] = [
     label: "Buying instead of renting",
   },
   {
-    id: "houseValue",
+    id: "housePrice",
     inputType: "number",
     increment: 1000,
     label: "House price",
@@ -209,7 +186,7 @@ const groupConfigs: GroupConfig[] = [
     visibleWhen: "always",
   },
   {
-    inputs: ["houseValue", "buyingCosts", "firstTimeBuyer"],
+    inputs: ["housePrice", "buyingCosts", "firstTimeBuyer"],
     label: "House",
     visibleWhen: "onlyIfBuying",
   },
@@ -322,7 +299,7 @@ function createCanvasElement(id: string, idSuffix: number): HTMLCanvasElement {
 export function createPropertyInputs(
   idSuffix: number,
   inputs: Inputs,
-): PropertyInputs {
+): [PropertyInputs, HTMLCanvasElement] {
   const propertyInputs: { [key in keyof Inputs]: HTMLInputElement } = {} as any;
   const propertyInputDivs: { [key in keyof Inputs]: HTMLDivElement } =
     {} as any;
@@ -383,5 +360,5 @@ export function createPropertyInputs(
 
   document.body.appendChild(wrapperDiv);
 
-  return { ...propertyInputs, canvas: canvas };
+  return [propertyInputs, canvas];
 }

@@ -8,40 +8,58 @@ import {
 import { Inputs, PropertyInputs, createPropertyInputs } from "./ui";
 import { MinMaxObject, createPlot } from "./plots";
 
-const DEFAULT_HOUSE_PRICE = 500_000;
-const DEFAULT_CASH = 310_000;
-const DEFAULT_MORTGAGE = 200_000;
-const DEFAULT_SALARY = 2_500;
-const DEFAULT_SALARY_GROWTH = 7;
-// The average gross rental yield, i.e. annual rent divided by house price, is around
-// 4.5% in London.
-// Source: https://www.trackcapital.co.uk/news-articles/uk-buy-to-let-yield-map/
-const DEFAULT_RENT = (DEFAULT_HOUSE_PRICE * 0.045) / 12;
-// These are numbers I got from a Nationwide calculator for 500k house with 200k mortgage
-// on 2024-06-09, rounded a bit.
-const DEFAULT_MORTGAGE_STAGE1_LENGTH = 2;
-const DEFAULT_MORTGAGE_INTEREST_RATE_STAGE1 = 6.14;
-const DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE1 = 1450;
-const DEFAULT_MORTGAGE_INTEREST_RATE_STAGE2 = 7.99;
-const DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE2 = 1650;
-const DEFAULT_MORTGAGE_OVERPAY = true;
-// House prices in London grew on average 4.4% between Jan 2005 and Jan 2024.
-// Source: https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/housepriceindex/latest
-const DEFAULT_HOUSE_APPRECIATION_RATE = 4.4;
-// Often quoted numbers for historical stock price growth are 6% and 7% over inflation.
-// CPIH grew by 2.9% annualised between January 2005 and Jan 2024.
-// Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23
-// BoE target is 2% inflation.
-const DEFAULT_STOCK_APPRECIATION_RATE = 9;
-// Rents are assumed to grow at the same rate as house prices. See above for house prices.
-const DEFAULT_RENT_GROWTH = DEFAULT_HOUSE_APPRECIATION_RATE;
-const DEFAULT_YEARS_TO_FORECAST = 20;
-const DEFAULT_BUYING_COSTS = 2500;
-const DEFAULT_FIRST_TIME_BUYER = true;
-const DEFAULT_GROUND_RENT = 500;
-const DEFAULT_SERVICE_CHARGE = 1800;
-const DEFAULT_MAINTENANCE_RATE = 2;
-const DEFAULT_HOME_INSURANCE = 300;
+type InputsById = {
+  [key: number]: Inputs;
+};
+
+const DEFAULT_INPUTS: Inputs = {
+  isBuying: true,
+  housePrice: 500_000,
+  cash: 315_000,
+  mortgage: 200_000,
+  salary: 2_500,
+  salaryGrowth: 7,
+  // The average gross rental yield, i.e. annual rent divided by house price, is around
+  // 4.5% in London.
+  // Source: https://www.trackcapital.co.uk/news-articles/uk-buy-to-let-yield-map/
+  rent: (500_000 * 0.045) / 12,
+  // These are numbers I got from a Nationwide calculator for 500k house with 200k mortgage
+  // on 2024-06-09, rounded a bit.
+  mortgageStage1Length: 2,
+  mortgageInterestRateStage1: 6.14,
+  mortgageMonthlyPaymentStage1: 1450,
+  mortgageInterestRateStage2: 7.99,
+  mortgageMonthlyPaymentStage2: 1650,
+  mortgageOverpay: true,
+  // House prices in London grew on average 4.4% between Jan 2005 and Jan 2024.
+  // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/housepriceindex/latest
+  houseAppreciationRate: 4.4,
+  // Often quoted numbers for historical stock price growth are 6% and 7% over inflation.
+  // CPIH grew by 2.9% annualised between January 2005 and Jan 2024.
+  // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23
+  // BoE target is 2% inflation.
+  stockAppreciationRate: 9,
+  // Rents are assumed to grow at the same rate as house prices. See above for house prices.
+  rentGrowth: 4.4,
+  yearsToForecast: 20,
+  buyingCosts: 2500,
+  firstTimeBuyer: true,
+  groundRent: 500,
+  serviceCharge: 1800,
+  maintenanceRate: 2,
+  homeInsurance: 300,
+};
+
+const DEFAULT_INPUTS_BY_ID = {
+  1: {
+    ...DEFAULT_INPUTS,
+    isBuying: true,
+  },
+  2: {
+    ...DEFAULT_INPUTS,
+    isBuying: false,
+  },
+};
 
 function makeNumberObservable(input: HTMLInputElement): Observable<number> {
   const observable: Observable<number> = fromEvent(input, "input").pipe(
@@ -59,61 +77,12 @@ function makeBooleanObservable(input: HTMLInputElement): Observable<boolean> {
   return observable;
 }
 
-type InputsById = {
-  [key: number]: Inputs;
-};
-
-const DEFAULT_INPUTS_BY_ID = {
-  1: {
-    isBuying: true,
-    houseValue: DEFAULT_HOUSE_PRICE,
-    cash: DEFAULT_CASH,
-    mortgage: DEFAULT_MORTGAGE,
-    salary: DEFAULT_SALARY,
-    salaryGrowth: DEFAULT_SALARY_GROWTH,
-    rent: DEFAULT_RENT,
-    rentGrowth: DEFAULT_RENT_GROWTH,
-    mortgageStage1Length: DEFAULT_MORTGAGE_STAGE1_LENGTH,
-    mortgageInterestRateStage1: DEFAULT_MORTGAGE_INTEREST_RATE_STAGE1,
-    mortgageMonthlyPaymentStage1: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE1,
-    mortgageInterestRateStage2: DEFAULT_MORTGAGE_INTEREST_RATE_STAGE2,
-    mortgageMonthlyPaymentStage2: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE2,
-    mortgageOverpay: DEFAULT_MORTGAGE_OVERPAY,
-    stockAppreciationRate: DEFAULT_STOCK_APPRECIATION_RATE,
-    houseAppreciationRate: DEFAULT_HOUSE_APPRECIATION_RATE,
-    yearsToForecast: DEFAULT_YEARS_TO_FORECAST,
-    buyingCosts: DEFAULT_BUYING_COSTS,
-    firstTimeBuyer: DEFAULT_FIRST_TIME_BUYER,
-    groundRent: DEFAULT_GROUND_RENT,
-    serviceCharge: DEFAULT_SERVICE_CHARGE,
-    maintenanceRate: DEFAULT_MAINTENANCE_RATE,
-    homeInsurance: DEFAULT_HOME_INSURANCE,
-  },
-  2: {
-    isBuying: false,
-    houseValue: DEFAULT_HOUSE_PRICE,
-    cash: DEFAULT_CASH,
-    mortgage: DEFAULT_MORTGAGE,
-    salary: DEFAULT_SALARY,
-    salaryGrowth: DEFAULT_SALARY_GROWTH,
-    rent: DEFAULT_RENT,
-    rentGrowth: DEFAULT_RENT_GROWTH,
-    mortgageStage1Length: DEFAULT_MORTGAGE_STAGE1_LENGTH,
-    mortgageInterestRateStage1: DEFAULT_MORTGAGE_INTEREST_RATE_STAGE1,
-    mortgageMonthlyPaymentStage1: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE1,
-    mortgageInterestRateStage2: DEFAULT_MORTGAGE_INTEREST_RATE_STAGE2,
-    mortgageMonthlyPaymentStage2: DEFAULT_MORTGAGE_MONTHLY_PAYMENT_STAGE2,
-    mortgageOverpay: DEFAULT_MORTGAGE_OVERPAY,
-    stockAppreciationRate: DEFAULT_STOCK_APPRECIATION_RATE,
-    houseAppreciationRate: DEFAULT_HOUSE_APPRECIATION_RATE,
-    yearsToForecast: DEFAULT_YEARS_TO_FORECAST,
-    buyingCosts: DEFAULT_BUYING_COSTS,
-    firstTimeBuyer: DEFAULT_FIRST_TIME_BUYER,
-    groundRent: DEFAULT_GROUND_RENT,
-    serviceCharge: DEFAULT_SERVICE_CHARGE,
-    maintenanceRate: DEFAULT_MAINTENANCE_RATE,
-    homeInsurance: DEFAULT_HOME_INSURANCE,
-  },
+type InputObservables = {
+  [K in keyof Inputs]: Inputs[K] extends number
+    ? Observable<number>
+    : Inputs[K] extends boolean
+      ? Observable<boolean>
+      : Inputs[K];
 };
 
 function makeScenario(
@@ -122,111 +91,65 @@ function makeScenario(
   allInputsSubject: BehaviorSubject<InputsById>,
   inputs: Inputs,
 ) {
-  const propertyInputs = createPropertyInputs(idNumber, inputs);
+  const [propertyInputs, canvas] = createPropertyInputs(idNumber, inputs);
 
-  // Create streams from the input elements
-  const isBuying$ = makeBooleanObservable(propertyInputs.isBuying);
-  const houseValue0$ = makeNumberObservable(propertyInputs.houseValue);
-  const cash0$ = makeNumberObservable(propertyInputs.cash);
-  const mortgage0$ = makeNumberObservable(propertyInputs.mortgage);
-  const salary$ = makeNumberObservable(propertyInputs.salary);
-  const salaryGrowth$ = makeNumberObservable(propertyInputs.salaryGrowth);
-  const rent$ = makeNumberObservable(propertyInputs.rent);
-  const rentGrowth$ = makeNumberObservable(propertyInputs.rentGrowth);
-  const mortgageStage1Length$ = makeNumberObservable(
-    propertyInputs.mortgageStage1Length,
-  );
-  const mortgageMonthlyPaymentStage1$ = makeNumberObservable(
-    propertyInputs.mortgageMonthlyPaymentStage1,
-  );
-  const mortgageInterestRateStage1$ = makeNumberObservable(
-    propertyInputs.mortgageInterestRateStage1,
-  );
-  const mortgageMonthlyPaymentStage2$ = makeNumberObservable(
-    propertyInputs.mortgageMonthlyPaymentStage2,
-  );
-  const mortgageInterestRateStage2$ = makeNumberObservable(
-    propertyInputs.mortgageInterestRateStage2,
-  );
-  const mortgageOverpay$ = makeBooleanObservable(
-    propertyInputs.mortgageOverpay,
-  );
-  const stockAppreciationRate$ = makeNumberObservable(
-    propertyInputs.stockAppreciationRate,
-  );
-  const houseAppreciationRate$ = makeNumberObservable(
-    propertyInputs.houseAppreciationRate,
-  );
-  const yearsToForecast$ = makeNumberObservable(propertyInputs.yearsToForecast);
-  const buyingCosts$ = makeNumberObservable(propertyInputs.buyingCosts);
-  const firstTimeBuyer$ = makeBooleanObservable(propertyInputs.firstTimeBuyer);
-  const groundRent$ = makeNumberObservable(propertyInputs.groundRent);
-  const serviceCharge$ = makeNumberObservable(propertyInputs.serviceCharge);
-  const homeInsurance$ = makeNumberObservable(propertyInputs.homeInsurance);
-  const maintenanceRate$ = makeNumberObservable(propertyInputs.maintenanceRate);
+  // Create observables from the input elements
+  const obs: InputObservables = {} as InputObservables;
+  for (const inputName in propertyInputs) {
+    const inputElement = propertyInputs[inputName];
+    if (inputElement.type === "checkbox") {
+      obs[inputName] = makeBooleanObservable(propertyInputs[inputName]);
+    } else {
+      obs[inputName] = makeNumberObservable(propertyInputs[inputName]);
+    }
+  }
 
   const summary0$: Observable<AnnualSummary> = combineLatest([
-    isBuying$,
-    houseValue0$,
-    cash0$,
-    salary$,
-    rent$,
-    mortgage0$,
-    buyingCosts$,
-    firstTimeBuyer$,
+    obs.isBuying,
+    obs.housePrice,
+    obs.cash,
+    obs.salary,
+    obs.rent,
+    obs.mortgage,
+    obs.buyingCosts,
+    obs.firstTimeBuyer,
   ]).pipe(
     map(
-      ([
-        isBuying,
-        houseValue0,
-        cash0,
-        salary,
-        rent,
-        mortgage0,
-        buyingCosts,
-        firstTimeBuyer,
-      ]: [
-        boolean,
-        number,
-        number,
-        number,
-        number,
-        number,
-        number,
-        boolean,
-      ]) => {
-        return getInitialSummary(
-          isBuying,
-          houseValue0,
-          cash0,
-          salary,
-          rent,
-          mortgage0,
-          buyingCosts,
-          firstTimeBuyer,
-        );
+      (
+        args: [
+          boolean,
+          number,
+          number,
+          number,
+          number,
+          number,
+          number,
+          boolean,
+        ],
+      ) => {
+        return getInitialSummary(...args);
       },
     ),
   );
 
   const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
     summary0$,
-    salaryGrowth$,
-    rentGrowth$,
-    isBuying$,
-    stockAppreciationRate$,
-    houseAppreciationRate$,
-    mortgageStage1Length$,
-    mortgageInterestRateStage1$,
-    mortgageMonthlyPaymentStage1$,
-    mortgageInterestRateStage2$,
-    mortgageMonthlyPaymentStage2$,
-    mortgageOverpay$,
-    yearsToForecast$,
-    groundRent$,
-    serviceCharge$,
-    homeInsurance$,
-    maintenanceRate$,
+    obs.salaryGrowth,
+    obs.rentGrowth,
+    obs.isBuying,
+    obs.stockAppreciationRate,
+    obs.houseAppreciationRate,
+    obs.mortgageStage1Length,
+    obs.mortgageInterestRateStage1,
+    obs.mortgageMonthlyPaymentStage1,
+    obs.mortgageInterestRateStage2,
+    obs.mortgageMonthlyPaymentStage2,
+    obs.mortgageOverpay,
+    obs.yearsToForecast,
+    obs.groundRent,
+    obs.serviceCharge,
+    obs.homeInsurance,
+    obs.maintenanceRate,
   ]).pipe(
     map(
       ([
@@ -247,6 +170,24 @@ function makeScenario(
         serviceCharge,
         homeInsurance,
         maintenanceRate,
+      ]: [
+        AnnualSummary,
+        number,
+        number,
+        boolean,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        boolean,
+        number,
+        number,
+        number,
+        number,
+        number,
       ]) => {
         const summaries = [summary0];
         let lastSummary = summary0;
@@ -284,7 +225,7 @@ function makeScenario(
     ),
   );
 
-  createPlot(idNumber, propertyInputs.canvas, summaries$, axisLimitsSubject);
+  createPlot(idNumber, canvas, summaries$, axisLimitsSubject);
 
   let currentAllInputs: InputsById;
   allInputsSubject.subscribe({
@@ -294,35 +235,35 @@ function makeScenario(
   });
 
   combineLatest([
-    isBuying$,
-    houseValue0$,
-    cash0$,
-    mortgage0$,
-    salary$,
-    salaryGrowth$,
-    rent$,
-    rentGrowth$,
-    mortgageStage1Length$,
-    mortgageInterestRateStage1$,
-    mortgageMonthlyPaymentStage1$,
-    mortgageInterestRateStage2$,
-    mortgageMonthlyPaymentStage2$,
-    mortgageOverpay$,
-    stockAppreciationRate$,
-    houseAppreciationRate$,
-    yearsToForecast$,
-    buyingCosts$,
-    firstTimeBuyer$,
-    groundRent$,
-    serviceCharge$,
-    maintenanceRate$,
-    homeInsurance$,
+    obs.isBuying,
+    obs.housePrice,
+    obs.cash,
+    obs.mortgage,
+    obs.salary,
+    obs.salaryGrowth,
+    obs.rent,
+    obs.rentGrowth,
+    obs.mortgageStage1Length,
+    obs.mortgageInterestRateStage1,
+    obs.mortgageMonthlyPaymentStage1,
+    obs.mortgageInterestRateStage2,
+    obs.mortgageMonthlyPaymentStage2,
+    obs.mortgageOverpay,
+    obs.stockAppreciationRate,
+    obs.houseAppreciationRate,
+    obs.yearsToForecast,
+    obs.buyingCosts,
+    obs.firstTimeBuyer,
+    obs.groundRent,
+    obs.serviceCharge,
+    obs.maintenanceRate,
+    obs.homeInsurance,
   ]).subscribe(
     ([
       isBuying,
-      houseValue0,
-      cash0,
-      mortgage0,
+      housePrice,
+      cash,
+      mortgage,
       salary,
       salaryGrowth,
       rent,
@@ -344,29 +285,29 @@ function makeScenario(
       homeInsurance,
     ]) => {
       currentAllInputs[idNumber] = {
-        isBuying: isBuying,
-        houseValue: houseValue0,
-        cash: cash0,
-        mortgage: mortgage0,
-        salary: salary,
-        salaryGrowth: salaryGrowth,
-        rent: rent,
-        rentGrowth: rentGrowth,
-        mortgageStage1Length: mortgageStage1Length,
-        mortgageInterestRateStage1: mortgageInterestRateStage1,
-        mortgageMonthlyPaymentStage1: mortgageMonthlyPaymentStage1,
-        mortgageInterestRateStage2: mortgageInterestRateStage2,
-        mortgageMonthlyPaymentStage2: mortgageMonthlyPaymentStage2,
-        mortgageOverpay: mortgageOverpay,
-        stockAppreciationRate: stockAppreciationRate,
-        houseAppreciationRate: houseAppreciationRate,
-        yearsToForecast: yearsToForecast,
-        buyingCosts: buyingCosts,
-        firstTimeBuyer: firstTimeBuyer,
-        groundRent: groundRent,
-        serviceCharge: serviceCharge,
-        maintenanceRate: maintenanceRate,
-        homeInsurance: homeInsurance,
+        isBuying,
+        housePrice,
+        cash,
+        mortgage,
+        salary,
+        salaryGrowth,
+        rent,
+        rentGrowth,
+        mortgageStage1Length,
+        mortgageInterestRateStage1,
+        mortgageMonthlyPaymentStage1,
+        mortgageInterestRateStage2,
+        mortgageMonthlyPaymentStage2,
+        mortgageOverpay,
+        stockAppreciationRate,
+        houseAppreciationRate,
+        yearsToForecast,
+        buyingCosts,
+        firstTimeBuyer,
+        groundRent,
+        serviceCharge,
+        maintenanceRate,
+        homeInsurance,
       };
       allInputsSubject.next(currentAllInputs);
     },

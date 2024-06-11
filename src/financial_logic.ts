@@ -97,7 +97,7 @@ function investSurplusCashInStocks(summary: AnnualSummary) {
   summary.stockNonIsaValuePaid += nonIsaInvestment;
 }
 
-function computeStampDuty(houseValue: number, firstTimeBuyer: boolean): number {
+function computeStampDuty(housePrice: number, firstTimeBuyer: boolean): number {
   const thresholds = [
     0,
     firstTimeBuyer ? 425_000 : 250_000,
@@ -108,22 +108,22 @@ function computeStampDuty(houseValue: number, firstTimeBuyer: boolean): number {
   const rates = [0.0, 0.05, 0.1, 0.12];
   let stampDuty = 0;
   for (let i = 0; i < rates.length; i++) {
-    if (houseValue <= thresholds[i]) break;
+    if (housePrice <= thresholds[i]) break;
     stampDuty +=
-      (Math.min(houseValue, thresholds[i + 1]) - thresholds[i]) * rates[i];
+      (Math.min(housePrice, thresholds[i + 1]) - thresholds[i]) * rates[i];
   }
   return stampDuty;
 }
 
 function buyHouse(
   summary: AnnualSummary,
-  houseValue: number,
+  housePrice: number,
   mortgage: number,
   buyingCosts: number,
   firstTimeBuyer: boolean,
 ) {
-  const stampDuty = computeStampDuty(houseValue, firstTimeBuyer);
-  const cashPurchasePart = houseValue - mortgage;
+  const stampDuty = computeStampDuty(housePrice, firstTimeBuyer);
+  const cashPurchasePart = housePrice - mortgage;
   const cashNeeded = stampDuty + buyingCosts + cashPurchasePart;
   if (cashNeeded > summary.cashValue) {
     goBankrupt(summary);
@@ -131,7 +131,7 @@ function buyHouse(
     summary.cashValue -= cashNeeded;
     summary.mortgageBalance += mortgage;
     summary.moneySpent += stampDuty + buyingCosts;
-    summary.houseValue += houseValue;
+    summary.houseValue += housePrice;
   }
 }
 
@@ -167,6 +167,7 @@ export function getNextSummary(
   maintenanceRate: number,
 ): AnnualSummary {
   const nextSummary = { ...summary };
+  // Expenses and income
   getSalary(nextSummary);
   payMortgage(nextSummary, mortgageMonthlyPayment, mortgageInterestRate);
   payRunningHouseCosts(
@@ -177,12 +178,15 @@ export function getNextSummary(
     homeInsurance,
   );
   if (!isBuying) payRent(nextSummary);
+  // Changes
   appreciateHouseValue(nextSummary, houseAppreciationRate);
   appreciateStockValue(nextSummary, stockAppreciationRate);
   getPayRaise(nextSummary, salaryGrowth);
   raiseRent(nextSummary, rentGrowth);
+  // What to do with any money left over.
   if (mortgageOverpay) overpayMortgage(nextSummary);
   investSurplusCashInStocks(nextSummary);
+  // Clean-up
   checkSummary(nextSummary);
   nextSummary.yearNumber += 1;
   return nextSummary;
@@ -190,7 +194,7 @@ export function getNextSummary(
 
 export function getInitialSummary(
   isBuying: boolean,
-  houseValue0: number,
+  housePrice: number,
   cash0: number,
   salary: number,
   rent: number,
@@ -211,7 +215,7 @@ export function getInitialSummary(
     moneySpent: 0,
   };
   if (isBuying)
-    buyHouse(summary, houseValue0, mortgage0, buyingCosts, firstTimeBuyer);
+    buyHouse(summary, housePrice, mortgage0, buyingCosts, firstTimeBuyer);
   investSurplusCashInStocks(summary);
   checkSummary(summary);
   return summary;
