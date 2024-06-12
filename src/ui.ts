@@ -19,7 +19,7 @@ export type Inputs = {
   buyingCosts: number;
   firstTimeBuyer: boolean;
   groundRent: number;
-  serviceCharge: number;
+  serviceChargeRate: number;
   maintenanceRate: number;
   homeInsurance: number;
 };
@@ -152,10 +152,10 @@ const inputConfigs: InputConfig[] = [
     label: "Ground rent",
   },
   {
-    id: "serviceCharge",
+    id: "serviceChargeRate",
     inputType: "number",
-    increment: 100,
-    label: "Service charge",
+    increment: 0.1,
+    label: "Service charge, % of value",
   },
   {
     id: "maintenanceRate",
@@ -204,7 +204,12 @@ const groupConfigs: GroupConfig[] = [
     visibleWhen: "onlyIfBuying",
   },
   {
-    inputs: ["groundRent", "serviceCharge", "maintenanceRate", "homeInsurance"],
+    inputs: [
+      "groundRent",
+      "serviceChargeRate",
+      "maintenanceRate",
+      "homeInsurance",
+    ],
     label: "Annual house expenses",
     visibleWhen: "onlyIfBuying",
   },

@@ -70,9 +70,10 @@ function payRunningHouseCosts(
   summary: AnnualSummary,
   maintenanceRate: number,
   groundRent: number,
-  serviceCharge: number,
+  serviceChargeRate: number,
   homeInsurance: number,
 ) {
+  const serviceCharge = (summary.houseValue * serviceChargeRate) / 100.0;
   const maintenance = (summary.houseValue * maintenanceRate) / 100.0;
   const totalOutgoings =
     maintenance + groundRent + serviceCharge + homeInsurance;
@@ -162,7 +163,7 @@ export function getNextSummary(
   mortgageMonthlyPayment: number,
   mortgageOverpay: boolean,
   groundRent: number,
-  serviceCharge: number,
+  serviceChargeRate: number,
   homeInsurance: number,
   maintenanceRate: number,
 ): AnnualSummary {
@@ -174,7 +175,7 @@ export function getNextSummary(
     nextSummary,
     maintenanceRate,
     groundRent,
-    serviceCharge,
+    serviceChargeRate,
     homeInsurance,
   );
   if (!isBuying) payRent(nextSummary);

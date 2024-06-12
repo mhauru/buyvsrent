@@ -18,7 +18,7 @@ const DEFAULT_INPUTS: Inputs = {
   housePrice: 500_000,
   cash: 315_000,
   mortgage: 200_000,
-  salary: 2_500,
+  salary: 2600,
   salaryGrowth: 7,
   // The average gross rental yield, i.e. annual rent divided by house price, is around
   // 4.5% in London.
@@ -46,7 +46,9 @@ const DEFAULT_INPUTS: Inputs = {
   buyingCosts: 2500,
   firstTimeBuyer: true,
   groundRent: 500,
-  serviceCharge: 1800,
+  // Service charge estimate picked roughly from here:
+  // https://www.sunnyavenue.co.uk/insight/what-is-a-reasonable-service-charge
+  serviceChargeRate: 0.6,
   maintenanceRate: 2,
   homeInsurance: 300,
 };
@@ -134,7 +136,7 @@ function makeScenario(
     obs.mortgageOverpay,
     obs.yearsToForecast,
     obs.groundRent,
-    obs.serviceCharge,
+    obs.serviceChargeRate,
     obs.homeInsurance,
     obs.maintenanceRate,
   ]).pipe(
@@ -154,7 +156,7 @@ function makeScenario(
         mortgageOverpay,
         yearsToForecast,
         groundRent,
-        serviceCharge,
+        serviceChargeRate,
         homeInsurance,
         maintenanceRate,
       ]) => {
@@ -182,7 +184,7 @@ function makeScenario(
             mortgageMonthlyPayment,
             mortgageOverpay,
             groundRent,
-            serviceCharge,
+            serviceChargeRate,
             homeInsurance,
             maintenanceRate,
           );
