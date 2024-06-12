@@ -43,7 +43,9 @@ const DEFAULT_INPUTS: Inputs = {
   // Rents are assumed to grow at the same rate as house prices. See above for house prices.
   rentGrowth: 4.4,
   yearsToForecast: 20,
-  buyingCosts: 2500,
+  // Buying costs rough estimate from here:
+  // https://www.zoopla.co.uk/discover/buying/buying-costs/
+  buyingCosts: 5000,
   firstTimeBuyer: true,
   groundRent: 500,
   // Service charge estimate picked roughly from here:
