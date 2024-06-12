@@ -113,24 +113,7 @@ function makeScenario(
     obs.mortgage,
     obs.buyingCosts,
     obs.firstTimeBuyer,
-  ]).pipe(
-    map(
-      (
-        args: [
-          boolean,
-          number,
-          number,
-          number,
-          number,
-          number,
-          number,
-          boolean,
-        ],
-      ) => {
-        return getInitialSummary(...args);
-      },
-    ),
-  );
+  ]).pipe(map((args) => getInitialSummary(...args)));
 
   const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
     summary0$,
@@ -170,24 +153,6 @@ function makeScenario(
         serviceCharge,
         homeInsurance,
         maintenanceRate,
-      ]: [
-        AnnualSummary,
-        number,
-        number,
-        boolean,
-        number,
-        number,
-        number,
-        number,
-        number,
-        number,
-        number,
-        boolean,
-        number,
-        number,
-        number,
-        number,
-        number,
       ]) => {
         const summaries = [summary0];
         let lastSummary = summary0;
@@ -234,84 +199,16 @@ function makeScenario(
     },
   });
 
-  combineLatest([
-    obs.isBuying,
-    obs.housePrice,
-    obs.cash,
-    obs.mortgage,
-    obs.salary,
-    obs.salaryGrowth,
-    obs.rent,
-    obs.rentGrowth,
-    obs.mortgageStage1Length,
-    obs.mortgageInterestRateStage1,
-    obs.mortgageMonthlyPaymentStage1,
-    obs.mortgageInterestRateStage2,
-    obs.mortgageMonthlyPaymentStage2,
-    obs.mortgageOverpay,
-    obs.stockAppreciationRate,
-    obs.houseAppreciationRate,
-    obs.yearsToForecast,
-    obs.buyingCosts,
-    obs.firstTimeBuyer,
-    obs.groundRent,
-    obs.serviceCharge,
-    obs.maintenanceRate,
-    obs.homeInsurance,
-  ]).subscribe(
-    ([
-      isBuying,
-      housePrice,
-      cash,
-      mortgage,
-      salary,
-      salaryGrowth,
-      rent,
-      rentGrowth,
-      mortgageStage1Length,
-      mortgageInterestRateStage1,
-      mortgageMonthlyPaymentStage1,
-      mortgageInterestRateStage2,
-      mortgageMonthlyPaymentStage2,
-      mortgageOverpay,
-      stockAppreciationRate,
-      houseAppreciationRate,
-      yearsToForecast,
-      buyingCosts,
-      firstTimeBuyer,
-      groundRent,
-      serviceCharge,
-      maintenanceRate,
-      homeInsurance,
-    ]) => {
-      currentAllInputs[idNumber] = {
-        isBuying,
-        housePrice,
-        cash,
-        mortgage,
-        salary,
-        salaryGrowth,
-        rent,
-        rentGrowth,
-        mortgageStage1Length,
-        mortgageInterestRateStage1,
-        mortgageMonthlyPaymentStage1,
-        mortgageInterestRateStage2,
-        mortgageMonthlyPaymentStage2,
-        mortgageOverpay,
-        stockAppreciationRate,
-        houseAppreciationRate,
-        yearsToForecast,
-        buyingCosts,
-        firstTimeBuyer,
-        groundRent,
-        serviceCharge,
-        maintenanceRate,
-        homeInsurance,
-      };
-      allInputsSubject.next(currentAllInputs);
-    },
-  );
+  const keys = Object.keys(obs);
+  const allObs = keys.map((key) => obs[key]);
+  combineLatest(allObs).subscribe((valuesAsArray) => {
+    const valuesAsObj: Inputs = {} as Inputs;
+    keys.forEach((key, i) => {
+      valuesAsObj[key] = valuesAsArray[i];
+    });
+    currentAllInputs[idNumber] = valuesAsObj;
+    allInputsSubject.next(currentAllInputs);
+  });
 }
 
 // Only used for making sure all plots have the same axis limits.
