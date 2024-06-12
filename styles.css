@@ -24,6 +24,50 @@ body {
   min-width: 300px;
 }
 
+.summary-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.summary-entries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.summary-header {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.summary-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  flex: 1 1 140px;
+  box-sizing: border-box;
+}
+
+.summary-label {
+  font-weight: normal;
+  margin-right: 2px;
+}
+
+.summary-value {
+  text-align: right;
+}
+
 .inputs-div {
   display: flex;
   flex-direction: column;
@@ -41,8 +85,8 @@ body {
     font-size: 1.1em;
     font-weight: bold;
     color: #333;
-    margin-bottom: 0.5em;
-    margin-top: 0.0em;
+    margin-bottom: 0.0em;
+    margin-top: 0.6em;
     padding: 0;
 }
 
@@ -54,10 +98,10 @@ body {
 }
 
 /* Horizontal separator line between input groups */
-.input-group-outer:not(:last-child)::after {
+.input-group-outer::before {
   content: '';
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
   height: 1px;

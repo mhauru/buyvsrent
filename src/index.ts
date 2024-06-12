@@ -4,6 +4,7 @@ import {
   AnnualSummary,
   getNextSummary,
   getInitialSummary,
+  computeCapitalGainsTax,
 } from "./financial_logic";
 import { Inputs, PropertyInputs, createPropertyInputs } from "./ui";
 import { MinMaxObject, createPlot } from "./plots";
@@ -91,7 +92,10 @@ function makeScenario(
   allInputsSubject: BehaviorSubject<InputsById>,
   inputs: Inputs,
 ) {
-  const [propertyInputs, canvas] = createPropertyInputs(idNumber, inputs);
+  const [propertyInputs, summaryValueSpans, canvas] = createPropertyInputs(
+    idNumber,
+    inputs,
+  );
 
   // Create observables from the input elements
   const obs: InputObservables = {} as InputObservables;
@@ -191,6 +195,31 @@ function makeScenario(
   );
 
   createPlot(idNumber, canvas, summaries$, axisLimitsSubject);
+
+  function numberToStringPretty(value: number) {
+    return Math.round(value).toLocaleString();
+  }
+
+  summaries$.subscribe((summaries: AnnualSummary[]) => {
+    const s = summaries[summaries.length - 1];
+    const postTaxWealth =
+      s.houseValue +
+      s.cashValue +
+      s.stockIsaValue +
+      s.stockNonIsaValue -
+      s.mortgageBalance -
+      computeCapitalGainsTax(s);
+    summaryValueSpans.houseValue.innerHTML = numberToStringPretty(s.houseValue);
+    summaryValueSpans.salary.innerHTML = numberToStringPretty(s.salary);
+    summaryValueSpans.wealth.innerHTML = numberToStringPretty(postTaxWealth);
+    summaryValueSpans.rent.innerHTML = numberToStringPretty(s.rent);
+    summaryValueSpans.stockIsaValue.innerHTML = numberToStringPretty(
+      s.stockIsaValue,
+    );
+    summaryValueSpans.stockNonIsaValue.innerHTML = numberToStringPretty(
+      s.stockNonIsaValue,
+    );
+  });
 
   let currentAllInputs: InputsById;
   allInputsSubject.subscribe({

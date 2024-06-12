@@ -296,10 +296,60 @@ function createCanvasElement(id: string, idSuffix: number): HTMLCanvasElement {
   return canvas;
 }
 
+function addSummaryEntry(
+  parentDiv: HTMLDivElement,
+  label: string,
+): HTMLSpanElement {
+  const div = document.createElement("div");
+  div.classList.add("summary-entry");
+  const labelSpan = document.createElement("span");
+  labelSpan.classList.add("summary-label");
+  labelSpan.innerHTML = label;
+  const valueSpan = document.createElement("span");
+  valueSpan.classList.add("summary-value");
+  div.appendChild(labelSpan);
+  div.appendChild(valueSpan);
+  parentDiv.appendChild(div);
+  return valueSpan;
+}
+
+type SummaryValueSpans = {
+  salary: HTMLSpanElement;
+  houseValue: HTMLSpanElement;
+  stockIsaValue: HTMLSpanElement;
+  stockNonIsaValue: HTMLSpanElement;
+  rent: HTMLSpanElement;
+  wealth: HTMLSpanElement;
+};
+
+function createSummaryDiv(): [HTMLDivElement, SummaryValueSpans] {
+  const div = document.createElement("div");
+  div.classList.add("summary-wrapper");
+  const header = document.createElement("div");
+  header.classList.add("summary-header");
+  header.innerHTML = "Final values";
+  div.appendChild(header);
+
+  const entriesContainer = document.createElement("div");
+  entriesContainer.classList.add("summary-entries");
+
+  const valueSpans = {
+    salary: addSummaryEntry(entriesContainer, "Salary:"),
+    stockIsaValue: addSummaryEntry(entriesContainer, "Stocks in ISA:"),
+    stockNonIsaValue: addSummaryEntry(entriesContainer, "Stocks outside ISA:"),
+    houseValue: addSummaryEntry(entriesContainer, "House value:"),
+    rent: addSummaryEntry(entriesContainer, "Rent:"),
+    wealth: addSummaryEntry(entriesContainer, "Wealth:"),
+  };
+
+  div.appendChild(entriesContainer);
+  return [div, valueSpans];
+}
+
 export function createPropertyInputs(
   idSuffix: number,
   inputs: Inputs,
-): [PropertyInputs, HTMLCanvasElement] {
+): [PropertyInputs, SummaryValueSpans, HTMLCanvasElement] {
   const propertyInputs: { [key in keyof Inputs]: HTMLInputElement } = {} as any;
   const propertyInputDivs: { [key in keyof Inputs]: HTMLDivElement } =
     {} as any;
@@ -349,6 +399,8 @@ export function createPropertyInputs(
   const canvas = createCanvasElement("canvas", idSuffix);
   canvasDiv.appendChild(canvas);
 
+  const [summaryDiv, summaryValueSpans] = createSummaryDiv();
+
   const inputsDiv = document.createElement("div");
   inputsDiv.classList.add("inputs-div");
   groups.forEach((element) => inputsDiv.appendChild(element));
@@ -356,9 +408,10 @@ export function createPropertyInputs(
   const wrapperDiv = document.createElement("div");
   wrapperDiv.classList.add("property-wrapper");
   wrapperDiv.appendChild(canvasDiv);
+  wrapperDiv.appendChild(summaryDiv);
   wrapperDiv.appendChild(inputsDiv);
 
   document.body.appendChild(wrapperDiv);
 
-  return [propertyInputs, canvas];
+  return [propertyInputs, summaryValueSpans, canvas];
 }
