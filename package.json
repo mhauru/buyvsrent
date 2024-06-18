@@ -13,6 +13,8 @@
     },
     "dependencies": {
         "chart.js": "^4.4.3",
+        "d3-random": "^3.0.1",
+        "mathjs": "^13.0.0",
         "rxjs": "^7.8.1"
     }
 }

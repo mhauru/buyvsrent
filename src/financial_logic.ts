@@ -1,3 +1,5 @@
+import { randomNormal } from "d3-random";
+
 const ISA_MAX_CONTRIBUTION = 20_000;
 const CAPITAL_GAINS_ALLOWANCE = 3_000;
 // TODO This only holds if you are in one of the >50k income tax brackets.
@@ -25,8 +27,13 @@ function appreciateHouseValue(
 
 function appreciateStockValue(
   summary: AnnualSummary,
-  stockAppreciationRate: number,
+  stockAppreciationRateMean: number,
+  stockAppreciationRateStdDev: number,
 ) {
+  const stockAppreciationRate = randomNormal(
+    stockAppreciationRateMean,
+    stockAppreciationRateStdDev,
+  )();
   summary.stockIsaValue *= 1 + stockAppreciationRate / 100.0;
   summary.stockNonIsaValue *= 1 + stockAppreciationRate / 100.0;
 }
@@ -157,7 +164,8 @@ export function getNextSummary(
   salaryGrowth: number,
   rentGrowth: number,
   isBuying: boolean,
-  stockAppreciationRate: number,
+  stockAppreciationRateMean: number,
+  stockAppreciationRateStdDev: number,
   houseAppreciationRate: number,
   mortgageInterestRate: number,
   mortgageMonthlyPayment: number,
@@ -181,7 +189,11 @@ export function getNextSummary(
   if (!isBuying) payRent(nextSummary);
   // Changes
   appreciateHouseValue(nextSummary, houseAppreciationRate);
-  appreciateStockValue(nextSummary, stockAppreciationRate);
+  appreciateStockValue(
+    nextSummary,
+    stockAppreciationRateMean,
+    stockAppreciationRateStdDev,
+  );
   getPayRaise(nextSummary, salaryGrowth);
   raiseRent(nextSummary, rentGrowth);
   // What to do with any money left over.

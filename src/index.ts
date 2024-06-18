@@ -1,5 +1,6 @@
 import { fromEvent, Observable, combineLatest, BehaviorSubject } from "rxjs";
 import { map, startWith } from "rxjs/operators";
+import { mean } from "mathjs";
 import {
   AnnualSummary,
   getNextSummary,
@@ -39,7 +40,8 @@ const DEFAULT_INPUTS: Inputs = {
   // CPIH grew by 2.9% annualised between January 2005 and Jan 2024.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23
   // BoE target is 2% inflation.
-  stockAppreciationRate: 9,
+  stockAppreciationRateMean: 9,
+  stockAppreciationRateStdDev: 5,
   // Rents are assumed to grow at the same rate as house prices. See above for house prices.
   rentGrowth: 4.4,
   yearsToForecast: 20,
@@ -53,6 +55,7 @@ const DEFAULT_INPUTS: Inputs = {
   serviceChargeRate: 0.6,
   maintenanceRate: 2,
   homeInsurance: 300,
+  numSamples: 1000,
 };
 
 const DEFAULT_INPUTS_BY_ID = {
@@ -123,12 +126,13 @@ function makeScenario(
     obs.firstTimeBuyer,
   ]).pipe(map((args) => getInitialSummary(...args)));
 
-  const summaries$: Observable<Array<AnnualSummary>> = combineLatest([
+  const summaries$: Observable<Array<Array<AnnualSummary>>> = combineLatest([
     summary0$,
     obs.salaryGrowth,
     obs.rentGrowth,
     obs.isBuying,
-    obs.stockAppreciationRate,
+    obs.stockAppreciationRateMean,
+    obs.stockAppreciationRateStdDev,
     obs.houseAppreciationRate,
     obs.mortgageStage1Length,
     obs.mortgageInterestRateStage1,
@@ -141,6 +145,7 @@ function makeScenario(
     obs.serviceChargeRate,
     obs.homeInsurance,
     obs.maintenanceRate,
+    obs.numSamples,
   ]).pipe(
     map(
       ([
@@ -148,7 +153,8 @@ function makeScenario(
         salaryGrowth,
         rentGrowth,
         isBuying,
-        stockAppreciationRate,
+        stockAppreciationRateMean,
+        stockAppreciationRateStdDev,
         houseAppreciationRate,
         mortgageStage1Length,
         mortgageInterestRateStage1,
@@ -161,39 +167,46 @@ function makeScenario(
         serviceChargeRate,
         homeInsurance,
         maintenanceRate,
+        numSamples,
       ]) => {
-        const summaries = [summary0];
-        let lastSummary = summary0;
+        const samples: Array<Array<AnnualSummary>> = [];
 
-        for (let i = 1; i <= yearsToForecast; i++) {
-          let mortgageMonthlyPayment: number;
-          let mortgageInterestRate: number;
-          if (i <= mortgageStage1Length) {
-            mortgageMonthlyPayment = mortgageMonthlyPaymentStage1;
-            mortgageInterestRate = mortgageInterestRateStage1;
-          } else {
-            mortgageMonthlyPayment = mortgageMonthlyPaymentStage2;
-            mortgageInterestRate = mortgageInterestRateStage2;
+        for (let i = 0; i < numSamples; i++) {
+          let history = [summary0];
+          let lastSummary = summary0;
+
+          for (let i = 1; i <= yearsToForecast; i++) {
+            let mortgageMonthlyPayment: number;
+            let mortgageInterestRate: number;
+            if (i <= mortgageStage1Length) {
+              mortgageMonthlyPayment = mortgageMonthlyPaymentStage1;
+              mortgageInterestRate = mortgageInterestRateStage1;
+            } else {
+              mortgageMonthlyPayment = mortgageMonthlyPaymentStage2;
+              mortgageInterestRate = mortgageInterestRateStage2;
+            }
+            const nextSummary = getNextSummary(
+              lastSummary,
+              salaryGrowth,
+              rentGrowth,
+              isBuying,
+              stockAppreciationRateMean,
+              stockAppreciationRateStdDev,
+              houseAppreciationRate,
+              mortgageInterestRate,
+              mortgageMonthlyPayment,
+              mortgageOverpay,
+              groundRent,
+              serviceChargeRate,
+              homeInsurance,
+              maintenanceRate,
+            );
+            history.push(nextSummary);
+            lastSummary = nextSummary;
           }
-          const nextSummary = getNextSummary(
-            lastSummary,
-            salaryGrowth,
-            rentGrowth,
-            isBuying,
-            stockAppreciationRate,
-            houseAppreciationRate,
-            mortgageInterestRate,
-            mortgageMonthlyPayment,
-            mortgageOverpay,
-            groundRent,
-            serviceChargeRate,
-            homeInsurance,
-            maintenanceRate,
-          );
-          summaries.push(nextSummary);
-          lastSummary = nextSummary;
+          samples.push(history);
         }
-        return summaries;
+        return samples;
       },
     ),
   );
@@ -204,24 +217,37 @@ function makeScenario(
     return Math.round(value).toLocaleString();
   }
 
-  summaries$.subscribe((summaries: AnnualSummary[]) => {
-    const s = summaries[summaries.length - 1];
-    const postTaxWealth =
-      s.houseValue +
-      s.cashValue +
-      s.stockIsaValue +
-      s.stockNonIsaValue -
-      s.mortgageBalance -
-      computeCapitalGainsTax(s);
-    summaryValueSpans.houseValue.innerHTML = numberToStringPretty(s.houseValue);
-    summaryValueSpans.salary.innerHTML = numberToStringPretty(s.salary);
+  summaries$.subscribe((summaries: AnnualSummary[][]) => {
+    const lastSummaries = summaries.map(
+      (history) => history[history.length - 1],
+    );
+    const postTaxWealth = mean(
+      lastSummaries.map((s) => {
+        return (
+          s.houseValue +
+          s.cashValue +
+          s.stockIsaValue +
+          s.stockNonIsaValue -
+          s.mortgageBalance -
+          computeCapitalGainsTax(s)
+        );
+      }),
+    );
+    summaryValueSpans.houseValue.innerHTML = numberToStringPretty(
+      mean(lastSummaries.map((s) => s.houseValue)),
+    );
+    summaryValueSpans.salary.innerHTML = numberToStringPretty(
+      mean(lastSummaries.map((s) => s.salary)),
+    );
     summaryValueSpans.wealth.innerHTML = numberToStringPretty(postTaxWealth);
-    summaryValueSpans.rent.innerHTML = numberToStringPretty(s.rent);
+    summaryValueSpans.rent.innerHTML = numberToStringPretty(
+      mean(lastSummaries.map((s) => s.rent)),
+    );
     summaryValueSpans.stockIsaValue.innerHTML = numberToStringPretty(
-      s.stockIsaValue,
+      mean(lastSummaries.map((s) => s.stockIsaValue)),
     );
     summaryValueSpans.stockNonIsaValue.innerHTML = numberToStringPretty(
-      s.stockNonIsaValue,
+      mean(lastSummaries.map((s) => s.stockNonIsaValue)),
     );
   });
 

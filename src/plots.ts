@@ -1,5 +1,6 @@
 import { Observable } from "rxjs";
 import { map } from "rxjs/operators";
+import { mean } from "mathjs";
 import {
   Chart,
   ChartConfiguration,
@@ -33,69 +34,77 @@ interface Dataset {
   showLine: boolean;
 }
 
+// Apply f to each AnnualSummary, and return a list of means of their values.
+function meanOverSamples(
+  summaries: Array<Array<AnnualSummary>>,
+  f: (arg1: AnnualSummary) => number,
+): Array<number> {
+  const transposed = summaries[0].map((_, colIndex) =>
+    summaries.map((row) => row[colIndex]),
+  );
+  return transposed.map((innerArray) => mean(innerArray.map(f)));
+}
+
+function listToPoints(list: Array<number>): Array<PlotPoint> {
+  return list.map((value, index) => {
+    return { x: index, y: value };
+  });
+}
+
 export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
   const datasets$: Observable<Array<Dataset>> = summaries$.pipe(
-    map((summaries: Array<AnnualSummary>) => {
-      const postTaxWealths = summaries.map((s, i) => {
-        return {
-          x: i,
-          y:
-            s.houseValue +
-            s.cashValue +
-            s.stockIsaValue +
-            s.stockNonIsaValue -
-            s.mortgageBalance -
-            computeCapitalGainsTax(s),
-        };
+    map((summaries: Array<Array<AnnualSummary>>) => {
+      const postTaxWealths = meanOverSamples(summaries, (s) => {
+        return (
+          s.houseValue +
+          s.cashValue +
+          s.stockIsaValue +
+          s.stockNonIsaValue -
+          s.mortgageBalance -
+          computeCapitalGainsTax(s)
+        );
       });
-      const mortgageBalances = summaries.map((s, i) => {
-        return { x: i, y: -s.mortgageBalance };
-      });
-      const cashValues = summaries.map((s, i) => {
-        return { x: i, y: s.cashValue };
-      });
-      const postTaxStocksValues = summaries.map((s, i) => {
-        return {
-          x: i,
-          y: s.stockIsaValue + s.stockNonIsaValue - computeCapitalGainsTax(s),
-        };
-      });
-      const houseValues = summaries.map((s, i) => {
-        return { x: i, y: s.houseValue };
-      });
-      const moneySpent = summaries.map((s, i) => {
-        return { x: i, y: -s.moneySpent };
-      });
+      const mortgageBalances = meanOverSamples(
+        summaries,
+        (s) => -s.mortgageBalance,
+      );
+      const cashValues = meanOverSamples(summaries, (s) => s.cashValue);
+      const postTaxStocksValues = meanOverSamples(
+        summaries,
+        (s) => s.stockIsaValue + s.stockNonIsaValue - computeCapitalGainsTax(s),
+      );
+      const houseValues = meanOverSamples(summaries, (s) => s.houseValue);
+      const moneySpent = meanOverSamples(summaries, (s) => -s.moneySpent);
 
       return [
         {
           label: "Total wealth post tax",
-          data: postTaxWealths,
+          data: listToPoints(postTaxWealths),
           showLine: true,
         },
         {
           label: "House value",
-          data: houseValues,
+          data: listToPoints(houseValues),
           showLine: true,
         },
         {
           label: "Stocks post tax",
-          data: postTaxStocksValues,
+          data: listToPoints(postTaxStocksValues),
           showLine: true,
         },
         {
           label: "Cash",
-          data: cashValues,
+          data: listToPoints(cashValues),
           showLine: true,
         },
         {
           label: "Mortgage",
-          data: mortgageBalances,
+          data: listToPoints(mortgageBalances),
           showLine: true,
         },
         {
           label: "Money spent",
-          data: moneySpent,
+          data: listToPoints(moneySpent),
           showLine: true,
         },
       ];

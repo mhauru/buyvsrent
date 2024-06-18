@@ -13,7 +13,8 @@ export type Inputs = {
   mortgageInterestRateStage2: number;
   mortgageMonthlyPaymentStage2: number;
   mortgageOverpay: boolean;
-  stockAppreciationRate: number;
+  stockAppreciationRateMean: number;
+  stockAppreciationRateStdDev: number;
   houseAppreciationRate: number;
   yearsToForecast: number;
   buyingCosts: number;
@@ -22,6 +23,7 @@ export type Inputs = {
   serviceChargeRate: number;
   maintenanceRate: number;
   homeInsurance: number;
+  numSamples: number;
 };
 
 export type PropertyInputs = {
@@ -116,10 +118,16 @@ const inputConfigs: InputConfig[] = [
     label: "Overpay when possible",
   },
   {
-    id: "stockAppreciationRate",
+    id: "stockAppreciationRateMean",
     inputType: "number",
     increment: 0.1,
-    label: "Stocks value appreciation (%), annual",
+    label: "Stocks value appreciation (%), annual, mean",
+  },
+  {
+    id: "stockAppreciationRateStdDev",
+    inputType: "number",
+    increment: 0.1,
+    label: "Stocks value appreciation (%), annual, std dev",
   },
   {
     id: "houseAppreciationRate",
@@ -168,6 +176,12 @@ const inputConfigs: InputConfig[] = [
     inputType: "number",
     increment: 50,
     label: "Home insurance",
+  },
+  {
+    id: "numSamples",
+    inputType: "number",
+    increment: 100,
+    label: "Number of simulations",
   },
 ];
 
@@ -219,11 +233,19 @@ const groupConfigs: GroupConfig[] = [
     visibleWhen: "onlyIfRenting",
   },
   {
-    inputs: ["houseAppreciationRate", "stockAppreciationRate"],
+    inputs: [
+      "houseAppreciationRate",
+      "stockAppreciationRateMean",
+      "stockAppreciationRateStdDev",
+    ],
     label: "Markets",
     visibleWhen: "always",
   },
-  { inputs: ["yearsToForecast"], label: "Simulation", visibleWhen: "always" },
+  {
+    inputs: ["yearsToForecast", "numSamples"],
+    label: "Simulation",
+    visibleWhen: "always",
+  },
 ];
 
 function createLabelElement(forId: string, text: string): HTMLLabelElement {
