@@ -1,6 +1,7 @@
 import { Observable } from "rxjs";
 import { map } from "rxjs/operators";
-import { mean } from "mathjs";
+import { median, quantileSeq } from "mathjs";
+import { color, Color } from "d3-color";
 import {
   Chart,
   ChartConfiguration,
@@ -13,6 +14,7 @@ import {
   LineElement,
   LinearScale,
   CategoryScale,
+  Filler,
 } from "chart.js";
 import { AnnualSummary, computeCapitalGainsTax } from "./financial_logic";
 
@@ -34,15 +36,24 @@ interface Dataset {
   showLine: boolean;
 }
 
-// Apply f to each AnnualSummary, and return a list of means of their values.
-function meanOverSamples(
+// Apply f to each AnnualSummary, and return a list of medians and percentiles of their values.
+function statsOverSamples(
   summaries: Array<Array<AnnualSummary>>,
   f: (arg1: AnnualSummary) => number,
-): Array<number> {
+): { median: Array<number>; p10: Array<number>; p90: Array<number> } {
   const transposed = summaries[0].map((_, colIndex) =>
     summaries.map((row) => row[colIndex]),
   );
-  return transposed.map((innerArray) => mean(innerArray.map(f)));
+  const medianValues = transposed.map((innerArray) =>
+    median(innerArray.map(f)),
+  );
+  const p10Values = transposed.map((innerArray) =>
+    quantileSeq(innerArray.map(f), 0.1),
+  );
+  const p90Values = transposed.map((innerArray) =>
+    quantileSeq(innerArray.map(f), 0.9),
+  );
+  return { median: medianValues, p10: p10Values, p90: p90Values };
 }
 
 function listToPoints(list: Array<number>): Array<PlotPoint> {
@@ -51,10 +62,23 @@ function listToPoints(list: Array<number>): Array<PlotPoint> {
   });
 }
 
+// Utility function to get a color for each label
+function getColorForLabel(label: string): Color {
+  const colors = {
+    "Total wealth post tax": color("rgba(75, 192, 192, 0.6)"),
+    "House value": color("rgba(255, 159, 64, 0.6)"),
+    "Stocks post tax": color("rgba(153, 102, 255, 0.6)"),
+    Cash: color("rgba(255, 205, 86, 0.6)"),
+    Mortgage: color("rgba(54, 162, 235, 0.6)"),
+    "Money spent": color("rgba(255, 99, 132, 0.6)"),
+  };
+  return colors[label] || "rgba(0, 0, 0, 0.6)";
+}
+
 export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
   const datasets$: Observable<Array<Dataset>> = summaries$.pipe(
     map((summaries: Array<Array<AnnualSummary>>) => {
-      const postTaxWealths = meanOverSamples(summaries, (s) => {
+      const postTaxWealths = statsOverSamples(summaries, (s) => {
         return (
           s.houseValue +
           s.cashValue +
@@ -64,49 +88,59 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
           computeCapitalGainsTax(s)
         );
       });
-      const mortgageBalances = meanOverSamples(
+      const mortgageBalances = statsOverSamples(
         summaries,
         (s) => -s.mortgageBalance,
       );
-      const cashValues = meanOverSamples(summaries, (s) => s.cashValue);
-      const postTaxStocksValues = meanOverSamples(
+      const cashValues = statsOverSamples(summaries, (s) => s.cashValue);
+      const postTaxStocksValues = statsOverSamples(
         summaries,
         (s) => s.stockIsaValue + s.stockNonIsaValue - computeCapitalGainsTax(s),
       );
-      const houseValues = meanOverSamples(summaries, (s) => s.houseValue);
-      const moneySpent = meanOverSamples(summaries, (s) => -s.moneySpent);
+      const houseValues = statsOverSamples(summaries, (s) => s.houseValue);
+      const moneySpent = statsOverSamples(summaries, (s) => -s.moneySpent);
+
+      const createDataset = (
+        label: string,
+        data: { median: Array<number>; p10: Array<number>; p90: Array<number> },
+      ) => {
+        const color = getColorForLabel(label);
+        const backgroundColor = color.copy({ opacity: 0.1 });
+        return [
+          {
+            label: `${label} (median)`,
+            data: listToPoints(data.median),
+            showLine: true,
+            borderColor: color,
+            fill: false,
+            pointRadius: 3,
+          },
+          {
+            label: `${label} (90th percentile)`,
+            data: listToPoints(data.p90),
+            showLine: false,
+            backgroundColor: backgroundColor,
+            fill: "+1",
+            pointRadius: 0,
+          },
+          {
+            label: `${label} (10th percentile)`,
+            data: listToPoints(data.p10),
+            showLine: false,
+            backgroundColor: backgroundColor,
+            fill: "-1",
+            pointRadius: 0,
+          },
+        ];
+      };
 
       return [
-        {
-          label: "Total wealth post tax",
-          data: listToPoints(postTaxWealths),
-          showLine: true,
-        },
-        {
-          label: "House value",
-          data: listToPoints(houseValues),
-          showLine: true,
-        },
-        {
-          label: "Stocks post tax",
-          data: listToPoints(postTaxStocksValues),
-          showLine: true,
-        },
-        {
-          label: "Cash",
-          data: listToPoints(cashValues),
-          showLine: true,
-        },
-        {
-          label: "Mortgage",
-          data: listToPoints(mortgageBalances),
-          showLine: true,
-        },
-        {
-          label: "Money spent",
-          data: listToPoints(moneySpent),
-          showLine: true,
-        },
+        ...createDataset("Total wealth post tax", postTaxWealths),
+        ...createDataset("House value", houseValues),
+        ...createDataset("Stocks post tax", postTaxStocksValues),
+        ...createDataset("Cash", cashValues),
+        ...createDataset("Mortgage", mortgageBalances),
+        ...createDataset("Money spent", moneySpent),
       ];
     }),
   );
@@ -121,6 +155,7 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
     LineElement,
     LinearScale,
     CategoryScale,
+    Filler,
   );
 
   const config: ChartConfiguration<"line", { x: number; y: number }[]> = {
@@ -146,6 +181,9 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
         },
       },
       plugins: {
+        filler: {
+          propagate: false,
+        },
         colors: {
           enabled: true,
         },
@@ -153,6 +191,7 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
           display: true, // This is true by default
           position: "top", // Position of the legend (top, left, bottom, right)
           labels: {
+            filter: (labelItem, _) => !labelItem.text.includes("percentile"),
             font: {
               size: 14, // Font size for legend labels
             },
