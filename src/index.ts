@@ -19,8 +19,8 @@ const DEFAULT_INPUTS: Inputs = {
   housePrice: 500_000,
   cash: 315_000,
   mortgage: 200_000,
-  salary: 2600,
-  salaryGrowth: 7,
+  salary: 2700,
+  salaryGrowth: { mean: 7, stdDev: 2 },
   // The average gross rental yield, i.e. annual rent divided by house price, is around
   // 4.5% in London.
   // Source: https://www.trackcapital.co.uk/news-articles/uk-buy-to-let-yield-map/
@@ -35,14 +35,14 @@ const DEFAULT_INPUTS: Inputs = {
   mortgageOverpay: true,
   // House prices in London grew on average 4.4% between Jan 2005 and Jan 2024.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/housepriceindex/latest
-  houseAppreciationRate: 4.4,
+  houseAppreciationRate: { mean: 4.4, stdDev: 2 },
   // Often quoted numbers for historical stock price growth are 6% and 7% over inflation.
   // CPIH grew by 2.9% annualised between January 2005 and Jan 2024.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23
   // BoE target is 2% inflation.
   stockAppreciationRate: { mean: 9, stdDev: 5 },
   // Rents are assumed to grow at the same rate as house prices. See above for house prices.
-  rentGrowth: 4.4,
+  rentGrowth: { mean: 4.4, stdDev: 2 },
   yearsToForecast: 20,
   // Buying costs rough estimate from here:
   // https://www.zoopla.co.uk/discover/buying/buying-costs/

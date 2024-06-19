@@ -19,21 +19,25 @@ export interface AnnualSummary {
   yearNumber: number;
 }
 
+function sampleRandomVariableDistribution(
+  d: RandomVariableDistribution,
+): number {
+  return randomNormal(d.mean, d.stdDev)();
+}
+
 function appreciateHouseValue(
   summary: AnnualSummary,
-  houseAppreciationRate: number,
+  houseAppreciationRate: RandomVariableDistribution,
 ) {
-  summary.houseValue *= 1 + houseAppreciationRate / 100.0;
+  const rate = sampleRandomVariableDistribution(houseAppreciationRate);
+  summary.houseValue *= 1 + rate / 100.0;
 }
 
 function appreciateStockValue(
   summary: AnnualSummary,
   stockAppreciationRate: RandomVariableDistribution,
 ) {
-  const rate = randomNormal(
-    stockAppreciationRate.mean,
-    stockAppreciationRate.stdDev,
-  )();
+  const rate = sampleRandomVariableDistribution(stockAppreciationRate);
   summary.stockIsaValue *= 1 + rate / 100.0;
   summary.stockNonIsaValue *= 1 + rate / 100.0;
 }
@@ -42,8 +46,11 @@ function getSalary(summary: AnnualSummary) {
   summary.cashValue += summary.salary * 12;
 }
 
-function getPayRaise(summary: AnnualSummary, salaryGrowth: number) {
-  summary.salary *= 1 + salaryGrowth / 100;
+function getPayRaise(
+  summary: AnnualSummary,
+  salaryGrowth: RandomVariableDistribution,
+) {
+  summary.salary *= 1 + sampleRandomVariableDistribution(salaryGrowth) / 100;
 }
 
 function payRent(summary: AnnualSummary) {
@@ -52,8 +59,11 @@ function payRent(summary: AnnualSummary) {
   summary.moneySpent += annualRent;
 }
 
-function raiseRent(summary: AnnualSummary, rentGrowth: number) {
-  summary.rent *= 1 + rentGrowth / 100;
+function raiseRent(
+  summary: AnnualSummary,
+  rentGrowth: RandomVariableDistribution,
+) {
+  summary.rent *= 1 + sampleRandomVariableDistribution(rentGrowth) / 100;
 }
 
 function payMortgage(
@@ -144,13 +154,16 @@ function buyHouse(
 }
 
 function goBankrupt(summary: AnnualSummary) {
-  summary.houseValue = NaN;
-  summary.cashValue = NaN;
-  summary.stockIsaValue = NaN;
-  summary.stockNonIsaValue = NaN;
-  summary.stockNonIsaValuePaid = NaN;
-  summary.mortgageBalance = NaN;
-  summary.moneySpent = NaN;
+  summary.houseValue = 0;
+  summary.cashValue = 0;
+  summary.stockIsaValue = 0;
+  summary.stockNonIsaValue = 0;
+  summary.stockNonIsaValuePaid = 0;
+  summary.mortgageBalance = 0;
+  summary.moneySpent = 0;
+  summary.salary = 0;
+  summary.stockNonIsaValuePaid = 0;
+  summary.rent = 0;
 }
 
 function checkSummary(summary: AnnualSummary) {
@@ -161,11 +174,11 @@ function checkSummary(summary: AnnualSummary) {
 
 export function getNextSummary(
   summary: AnnualSummary,
-  salaryGrowth: number,
-  rentGrowth: number,
+  salaryGrowth: RandomVariableDistribution,
+  rentGrowth: RandomVariableDistribution,
   isBuying: boolean,
   stockAppreciationRate: RandomVariableDistribution,
-  houseAppreciationRate: number,
+  houseAppreciationRate: RandomVariableDistribution,
   mortgageInterestRate: number,
   mortgageMonthlyPayment: number,
   mortgageOverpay: boolean,

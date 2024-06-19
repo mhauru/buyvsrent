@@ -4,9 +4,9 @@ export type Inputs = {
   cash: number;
   mortgage: number;
   salary: number;
-  salaryGrowth: number;
+  salaryGrowth: RandomVariableDistribution;
   rent: number;
-  rentGrowth: number;
+  rentGrowth: RandomVariableDistribution;
   mortgageStage1Length: number;
   mortgageInterestRateStage1: number;
   mortgageMonthlyPaymentStage1: number;
@@ -14,7 +14,7 @@ export type Inputs = {
   mortgageMonthlyPaymentStage2: number;
   mortgageOverpay: boolean;
   stockAppreciationRate: RandomVariableDistribution;
-  houseAppreciationRate: number;
+  houseAppreciationRate: RandomVariableDistribution;
   yearsToForecast: number;
   buyingCosts: number;
   firstTimeBuyer: boolean;
@@ -69,14 +69,14 @@ const inputConfigs: InputConfig[] = [
   },
   {
     id: "salaryGrowth",
-    inputType: "number",
+    inputType: "randomVariable",
     increment: 0.1,
     label: "Salary growth (%), annual",
   },
   { id: "rent", inputType: "number", increment: 100, label: "Monthly rent" },
   {
     id: "rentGrowth",
-    inputType: "number",
+    inputType: "randomVariable",
     increment: 0.1,
     label: "Rent growth (%), annual",
   },
@@ -124,7 +124,7 @@ const inputConfigs: InputConfig[] = [
   },
   {
     id: "houseAppreciationRate",
-    inputType: "number",
+    inputType: "randomVariable",
     increment: 0.1,
     label: "House price growth (%), annual",
   },
