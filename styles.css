@@ -79,12 +79,16 @@ body {
   display: flex;
   align-items: center;
   gap: 0.1em;
+  width: 100%; /* Ensure the container takes full width */
+  box-sizing: border-box; /* Adjusts for padding and borders */
 }
 
-.input-field.random-variable-mean-input {
+.input-field.random-variable-mean-input,
+.input-field.random-variable-stddev-input {
   flex: 1;
   padding: 0.5em;
   max-width: 80px;
+  box-sizing: border-box; /* Include padding and border in the total width */
 }
 
 .random-variable-plusminus-span {
@@ -95,34 +99,26 @@ body {
   font-size: 1.2em;
 }
 
-.input-field.random-variable-stddev-input {
-  flex: 1;
-  padding: 0.5em;
-  max-width: 80px;
-}
-
 .input-group-outer {
   padding-bottom: 16px;
   position: relative;
 }
 
 .input-group-outer h1 {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 0.0em;
-    margin-top: 0.6em;
-    padding: 0;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 0.0em;
+  margin-top: 0.6em;
+  padding: 0;
 }
 
 .input-group {
   display: grid;
-  /* Adjust this value to control the minimum width */
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 16px;
 }
 
-/* Horizontal separator line between input groups */
 .input-group-outer::before {
   content: '';
   position: absolute;
@@ -138,6 +134,8 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
+  width: 100%; /* Ensure the div takes full width */
+  box-sizing: border-box; /* Include padding and border in the total width */
 }
 
 .input-label {
@@ -155,7 +153,8 @@ body {
   padding: 0.5em;
   border: 1px solid #ccc;
   border-radius: 4px;
-  box-sizing: border-box;
+  box-sizing: border-box; /* Include padding and border in the total width */
+  width: 100%; /* Ensure the input respects the parent's width */
 }
 
 .canvas-container {
