@@ -22,6 +22,7 @@ export type Inputs = {
   serviceChargeRate: number;
   maintenanceRate: number;
   homeInsurance: number;
+  seed: number;
   numSamples: number;
 };
 
@@ -171,6 +172,12 @@ const inputConfigs: InputConfig[] = [
     label: "Home insurance",
   },
   {
+    id: "seed",
+    inputType: "number",
+    increment: 0.1,
+    label: "Random seed",
+  },
+  {
     id: "numSamples",
     inputType: "number",
     increment: 100,
@@ -231,7 +238,7 @@ const groupConfigs: GroupConfig[] = [
     visibleWhen: "always",
   },
   {
-    inputs: ["yearsToForecast", "numSamples"],
+    inputs: ["yearsToForecast", "numSamples", "seed"],
     label: "Simulation",
     visibleWhen: "always",
   },

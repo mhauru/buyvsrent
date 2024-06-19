@@ -1,10 +1,9 @@
-import { randomNormal } from "d3-random";
-import { RandomVariableDistribution } from "./ui";
-
 const ISA_MAX_CONTRIBUTION = 20_000;
 const CAPITAL_GAINS_ALLOWANCE = 3_000;
 // TODO This only holds if you are in one of the >50k income tax brackets.
 const CAPITAL_GAINS_RATE = 20;
+
+export type RandomGenerator = () => number;
 
 export interface AnnualSummary {
   houseValue: number;
@@ -19,25 +18,19 @@ export interface AnnualSummary {
   yearNumber: number;
 }
 
-function sampleRandomVariableDistribution(
-  d: RandomVariableDistribution,
-): number {
-  return randomNormal(d.mean, d.stdDev)();
-}
-
 function appreciateHouseValue(
   summary: AnnualSummary,
-  houseAppreciationRate: RandomVariableDistribution,
+  houseAppreciationRate: RandomGenerator,
 ) {
-  const rate = sampleRandomVariableDistribution(houseAppreciationRate);
+  const rate = houseAppreciationRate();
   summary.houseValue *= 1 + rate / 100.0;
 }
 
 function appreciateStockValue(
   summary: AnnualSummary,
-  stockAppreciationRate: RandomVariableDistribution,
+  stockAppreciationRate: RandomGenerator,
 ) {
-  const rate = sampleRandomVariableDistribution(stockAppreciationRate);
+  const rate = stockAppreciationRate();
   summary.stockIsaValue *= 1 + rate / 100.0;
   summary.stockNonIsaValue *= 1 + rate / 100.0;
 }
@@ -46,11 +39,8 @@ function getSalary(summary: AnnualSummary) {
   summary.cashValue += summary.salary * 12;
 }
 
-function getPayRaise(
-  summary: AnnualSummary,
-  salaryGrowth: RandomVariableDistribution,
-) {
-  summary.salary *= 1 + sampleRandomVariableDistribution(salaryGrowth) / 100;
+function getPayRaise(summary: AnnualSummary, salaryGrowth: RandomGenerator) {
+  summary.salary *= 1 + salaryGrowth() / 100;
 }
 
 function payRent(summary: AnnualSummary) {
@@ -59,11 +49,8 @@ function payRent(summary: AnnualSummary) {
   summary.moneySpent += annualRent;
 }
 
-function raiseRent(
-  summary: AnnualSummary,
-  rentGrowth: RandomVariableDistribution,
-) {
-  summary.rent *= 1 + sampleRandomVariableDistribution(rentGrowth) / 100;
+function raiseRent(summary: AnnualSummary, rentGrowth: RandomGenerator) {
+  summary.rent *= 1 + rentGrowth() / 100;
 }
 
 function payMortgage(
@@ -174,11 +161,11 @@ function checkSummary(summary: AnnualSummary) {
 
 export function getNextSummary(
   summary: AnnualSummary,
-  salaryGrowth: RandomVariableDistribution,
-  rentGrowth: RandomVariableDistribution,
+  salaryGrowth: RandomGenerator,
+  rentGrowth: RandomGenerator,
   isBuying: boolean,
-  stockAppreciationRate: RandomVariableDistribution,
-  houseAppreciationRate: RandomVariableDistribution,
+  stockAppreciationRate: RandomGenerator,
+  houseAppreciationRate: RandomGenerator,
   mortgageInterestRate: number,
   mortgageMonthlyPayment: number,
   mortgageOverpay: boolean,

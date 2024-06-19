@@ -1,7 +1,9 @@
 import { fromEvent, Observable, combineLatest, BehaviorSubject } from "rxjs";
+import { randomNormal, randomLcg } from "d3-random";
 import { map, startWith } from "rxjs/operators";
 import { mean } from "mathjs";
 import {
+  RandomGenerator,
   AnnualSummary,
   getNextSummary,
   getInitialSummary,
@@ -55,6 +57,7 @@ const DEFAULT_INPUTS: Inputs = {
   maintenanceRate: 2,
   homeInsurance: 300,
   numSamples: 100,
+  seed: 0.0,
 };
 
 const DEFAULT_INPUTS_BY_ID = {
@@ -110,6 +113,16 @@ type InputObservables = {
         ? Observable<RandomVariableDistribution>
         : Inputs[K];
 };
+
+function makeGenerator(
+  rootGenerator,
+  distribution: RandomVariableDistribution,
+): RandomGenerator {
+  return randomNormal.source(rootGenerator)(
+    distribution.mean,
+    distribution.stdDev,
+  );
+}
 
 function makeScenario(
   idNumber: number,
@@ -168,15 +181,16 @@ function makeScenario(
     obs.homeInsurance,
     obs.maintenanceRate,
     obs.numSamples,
+    obs.seed,
   ]).pipe(
     map(
       ([
         summary0,
-        salaryGrowth,
-        rentGrowth,
+        salaryGrowthDist,
+        rentGrowthDist,
         isBuying,
-        stockAppreciationRate,
-        houseAppreciationRate,
+        stockAppreciationRateDist,
+        houseAppreciationRateDist,
         mortgageStage1Length,
         mortgageInterestRateStage1,
         mortgageMonthlyPaymentStage1,
@@ -189,10 +203,22 @@ function makeScenario(
         homeInsurance,
         maintenanceRate,
         numSamples,
+        seed,
       ]) => {
         const samples: Array<Array<AnnualSummary>> = [];
 
+        const rootGenerator = randomLcg(seed);
         for (let i = 0; i < numSamples; i++) {
+          const stockAppreciationRate = makeGenerator(
+            rootGenerator,
+            stockAppreciationRateDist,
+          );
+          const salaryGrowth = makeGenerator(rootGenerator, salaryGrowthDist);
+          const rentGrowth = makeGenerator(rootGenerator, rentGrowthDist);
+          const houseAppreciationRate = makeGenerator(
+            rootGenerator,
+            houseAppreciationRateDist,
+          );
           let history = [summary0];
           let lastSummary = summary0;
 
