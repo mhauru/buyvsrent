@@ -13,8 +13,7 @@ export type Inputs = {
   mortgageInterestRateStage2: number;
   mortgageMonthlyPaymentStage2: number;
   mortgageOverpay: boolean;
-  stockAppreciationRateMean: number;
-  stockAppreciationRateStdDev: number;
+  stockAppreciationRate: RandomVariableDistribution;
   houseAppreciationRate: number;
   yearsToForecast: number;
   buyingCosts: number;
@@ -27,12 +26,12 @@ export type Inputs = {
 };
 
 export type PropertyInputs = {
-  [K in keyof Inputs]: HTMLInputElement;
+  [K in keyof Inputs]: HTMLInputElement[];
 };
 
 interface InputConfig {
   id: keyof Inputs;
-  inputType: "checkbox" | "number";
+  inputType: "checkbox" | "number" | "randomVariable";
   increment: number | string;
   label: string;
 }
@@ -118,16 +117,10 @@ const inputConfigs: InputConfig[] = [
     label: "Overpay when possible",
   },
   {
-    id: "stockAppreciationRateMean",
-    inputType: "number",
+    id: "stockAppreciationRate",
+    inputType: "randomVariable",
     increment: 0.1,
-    label: "Stocks value appreciation (%), annual, mean",
-  },
-  {
-    id: "stockAppreciationRateStdDev",
-    inputType: "number",
-    increment: 0.1,
-    label: "Stocks value appreciation (%), annual, std dev",
+    label: "Stocks value appreciation (%), annual",
   },
   {
     id: "houseAppreciationRate",
@@ -233,11 +226,7 @@ const groupConfigs: GroupConfig[] = [
     visibleWhen: "onlyIfRenting",
   },
   {
-    inputs: [
-      "houseAppreciationRate",
-      "stockAppreciationRateMean",
-      "stockAppreciationRateStdDev",
-    ],
+    inputs: ["houseAppreciationRate", "stockAppreciationRate"],
     label: "Markets",
     visibleWhen: "always",
   },
@@ -276,21 +265,85 @@ function createInputElement(
   return input;
 }
 
+export type RandomVariableDistribution = {
+  mean: number;
+  stdDev: number;
+};
+
+function createRandomVariableInputDiv(
+  id: string,
+  idSuffix: number,
+  value: RandomVariableDistribution,
+  step: string | number,
+  label: string,
+): [HTMLInputElement[], HTMLDivElement] {
+  // Create the main container div
+  const div = document.createElement("div");
+  div.classList.add("input-div");
+  div.classList.add("random-variable-input-div");
+
+  const labelElement = createLabelElement(`${id}_${idSuffix}_mean`, label);
+  div.appendChild(labelElement);
+
+  const meanInputElement = createInputElement(
+    `${id}_mean`,
+    idSuffix,
+    "number",
+    value.mean,
+    step,
+  );
+  meanInputElement.classList.add("random-variable-mean-input");
+  const plusMinusSpan = document.createElement("span");
+  plusMinusSpan.innerHTML = "±";
+  plusMinusSpan.classList.add("random-variable-plusminus-span");
+  const stdDevInputElement = createInputElement(
+    `${id}_stddev`,
+    idSuffix,
+    "number",
+    value.stdDev,
+    step,
+  );
+  stdDevInputElement.classList.add("random-variable-stddev-input");
+
+  const inputsContainer = document.createElement("div");
+  inputsContainer.classList.add("random-variable-inputs-container");
+  inputsContainer.appendChild(meanInputElement);
+  inputsContainer.appendChild(plusMinusSpan);
+  inputsContainer.appendChild(stdDevInputElement);
+  div.appendChild(inputsContainer);
+  return [[meanInputElement, stdDevInputElement], div];
+}
+
 function createInputDiv(
   id: string,
   idSuffix: number,
   type: string,
-  value: string | number | boolean,
+  value: string | number | boolean | RandomVariableDistribution,
   step: string | number,
   label: string,
-): [HTMLInputElement, HTMLDivElement] {
-  const inputElement = createInputElement(id, idSuffix, type, value, step);
+): [HTMLInputElement[], HTMLDivElement] {
+  if (type == "randomVariable") {
+    return createRandomVariableInputDiv(
+      id,
+      idSuffix,
+      value as RandomVariableDistribution,
+      step,
+      label,
+    );
+  }
+  const inputElement = createInputElement(
+    id,
+    idSuffix,
+    type,
+    value as string | number | boolean,
+    step,
+  );
   const labelElement = createLabelElement(inputElement.id, label);
   const div = document.createElement("div");
   div.appendChild(labelElement);
   div.appendChild(inputElement);
   div.classList.add("input-div");
-  return [inputElement, div];
+  return [[inputElement], div];
 }
 
 function createGroup(
@@ -377,12 +430,12 @@ export function createPropertyInputs(
   idSuffix: number,
   inputs: Inputs,
 ): [PropertyInputs, SummaryValueSpans, HTMLCanvasElement] {
-  const propertyInputs: { [key in keyof Inputs]: HTMLInputElement } = {} as any;
+  const propertyInputs: PropertyInputs = {} as any;
   const propertyInputDivs: { [key in keyof Inputs]: HTMLDivElement } =
     {} as any;
 
   inputConfigs.forEach((config) => {
-    const [input, inputDiv] = createInputDiv(
+    const [inputElements, inputDiv] = createInputDiv(
       config.id,
       idSuffix,
       config.inputType,
@@ -390,7 +443,7 @@ export function createPropertyInputs(
       config.increment,
       config.label,
     );
-    propertyInputs[config.id] = input;
+    propertyInputs[config.id] = inputElements;
     propertyInputDivs[config.id] = inputDiv;
   });
 
@@ -416,9 +469,9 @@ export function createPropertyInputs(
     });
   }
 
-  updateGroupVisibility(propertyInputs.isBuying.checked);
+  updateGroupVisibility(propertyInputs.isBuying[0].checked);
 
-  propertyInputs.isBuying.addEventListener("change", (event) => {
+  propertyInputs.isBuying[0].addEventListener("change", (event) => {
     updateGroupVisibility((event.target as HTMLInputElement).checked);
   });
 

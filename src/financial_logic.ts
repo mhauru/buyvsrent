@@ -1,4 +1,5 @@
 import { randomNormal } from "d3-random";
+import { RandomVariableDistribution } from "./ui";
 
 const ISA_MAX_CONTRIBUTION = 20_000;
 const CAPITAL_GAINS_ALLOWANCE = 3_000;
@@ -27,15 +28,14 @@ function appreciateHouseValue(
 
 function appreciateStockValue(
   summary: AnnualSummary,
-  stockAppreciationRateMean: number,
-  stockAppreciationRateStdDev: number,
+  stockAppreciationRate: RandomVariableDistribution,
 ) {
-  const stockAppreciationRate = randomNormal(
-    stockAppreciationRateMean,
-    stockAppreciationRateStdDev,
+  const rate = randomNormal(
+    stockAppreciationRate.mean,
+    stockAppreciationRate.stdDev,
   )();
-  summary.stockIsaValue *= 1 + stockAppreciationRate / 100.0;
-  summary.stockNonIsaValue *= 1 + stockAppreciationRate / 100.0;
+  summary.stockIsaValue *= 1 + rate / 100.0;
+  summary.stockNonIsaValue *= 1 + rate / 100.0;
 }
 
 function getSalary(summary: AnnualSummary) {
@@ -164,8 +164,7 @@ export function getNextSummary(
   salaryGrowth: number,
   rentGrowth: number,
   isBuying: boolean,
-  stockAppreciationRateMean: number,
-  stockAppreciationRateStdDev: number,
+  stockAppreciationRate: RandomVariableDistribution,
   houseAppreciationRate: number,
   mortgageInterestRate: number,
   mortgageMonthlyPayment: number,
@@ -189,11 +188,7 @@ export function getNextSummary(
   if (!isBuying) payRent(nextSummary);
   // Changes
   appreciateHouseValue(nextSummary, houseAppreciationRate);
-  appreciateStockValue(
-    nextSummary,
-    stockAppreciationRateMean,
-    stockAppreciationRateStdDev,
-  );
+  appreciateStockValue(nextSummary, stockAppreciationRate);
   getPayRaise(nextSummary, salaryGrowth);
   raiseRent(nextSummary, rentGrowth);
   // What to do with any money left over.

@@ -188,14 +188,14 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
           enabled: true,
         },
         legend: {
-          display: true, // This is true by default
-          position: "top", // Position of the legend (top, left, bottom, right)
+          display: true,
+          position: "top",
           labels: {
             filter: (labelItem, _) => !labelItem.text.includes("percentile"),
             font: {
-              size: 14, // Font size for legend labels
+              size: 14,
             },
-            color: "rgb(0, 0, 0)", // Font color for legend labels
+            color: "rgb(0, 0, 0)",
           },
         },
       },

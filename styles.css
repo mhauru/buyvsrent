@@ -75,12 +75,37 @@ body {
   width: 100%;
 }
 
+.random-variable-inputs-container {
+  display: flex;
+  align-items: center;
+  gap: 0.1em;
+}
+
+.input-field.random-variable-mean-input {
+  flex: 1;
+  padding: 0.5em;
+  max-width: 80px;
+}
+
+.random-variable-plusminus-span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.4em;
+  font-size: 1.2em;
+}
+
+.input-field.random-variable-stddev-input {
+  flex: 1;
+  padding: 0.5em;
+  max-width: 80px;
+}
+
 .input-group-outer {
   padding-bottom: 16px;
   position: relative;
 }
 
-/* Headers for the input groups. */
 .input-group-outer h1 {
     font-size: 1.1em;
     font-weight: bold;
@@ -94,7 +119,7 @@ body {
   display: grid;
   /* Adjust this value to control the minimum width */
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px; /* Adjust spacing between input-divs */
+  gap: 16px;
 }
 
 /* Horizontal separator line between input groups */

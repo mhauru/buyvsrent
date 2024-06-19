@@ -7,7 +7,7 @@ import {
   getInitialSummary,
   computeCapitalGainsTax,
 } from "./financial_logic";
-import { Inputs, PropertyInputs, createPropertyInputs } from "./ui";
+import { Inputs, RandomVariableDistribution, createPropertyInputs } from "./ui";
 import { MinMaxObject, createPlot } from "./plots";
 
 type InputsById = {
@@ -40,8 +40,7 @@ const DEFAULT_INPUTS: Inputs = {
   // CPIH grew by 2.9% annualised between January 2005 and Jan 2024.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23
   // BoE target is 2% inflation.
-  stockAppreciationRateMean: 9,
-  stockAppreciationRateStdDev: 5,
+  stockAppreciationRate: { mean: 9, stdDev: 5 },
   // Rents are assumed to grow at the same rate as house prices. See above for house prices.
   rentGrowth: 4.4,
   yearsToForecast: 20,
@@ -55,7 +54,7 @@ const DEFAULT_INPUTS: Inputs = {
   serviceChargeRate: 0.6,
   maintenanceRate: 2,
   homeInsurance: 300,
-  numSamples: 1000,
+  numSamples: 100,
 };
 
 const DEFAULT_INPUTS_BY_ID = {
@@ -85,12 +84,31 @@ function makeBooleanObservable(input: HTMLInputElement): Observable<boolean> {
   return observable;
 }
 
+function makeDistributionObservable([
+  inputMean,
+  inputStdDev,
+]: HTMLInputElement[]): Observable<RandomVariableDistribution> {
+  const meanObservable = makeNumberObservable(inputMean);
+  const stdDevObservable = makeNumberObservable(inputStdDev);
+  const observable: Observable<RandomVariableDistribution> = combineLatest([
+    meanObservable,
+    stdDevObservable,
+  ]).pipe(
+    map(([mean, stdDev]) => {
+      return { mean: mean, stdDev: stdDev };
+    }),
+  );
+  return observable;
+}
+
 type InputObservables = {
   [K in keyof Inputs]: Inputs[K] extends number
     ? Observable<number>
     : Inputs[K] extends boolean
       ? Observable<boolean>
-      : Inputs[K];
+      : Inputs[K] extends RandomVariableDistribution
+        ? Observable<RandomVariableDistribution>
+        : Inputs[K];
 };
 
 function makeScenario(
@@ -107,11 +125,16 @@ function makeScenario(
   // Create observables from the input elements
   const obs: InputObservables = {} as InputObservables;
   for (const inputName in propertyInputs) {
-    const inputElement = propertyInputs[inputName];
-    if (inputElement.type === "checkbox") {
-      obs[inputName] = makeBooleanObservable(propertyInputs[inputName]);
+    const inputElements = propertyInputs[inputName];
+    if (inputElements.length > 1) {
+      obs[inputName] = makeDistributionObservable(inputElements);
     } else {
-      obs[inputName] = makeNumberObservable(propertyInputs[inputName]);
+      const inputElement = inputElements[0];
+      if (inputElement.type === "checkbox") {
+        obs[inputName] = makeBooleanObservable(inputElement);
+      } else {
+        obs[inputName] = makeNumberObservable(inputElement);
+      }
     }
   }
 
@@ -131,8 +154,7 @@ function makeScenario(
     obs.salaryGrowth,
     obs.rentGrowth,
     obs.isBuying,
-    obs.stockAppreciationRateMean,
-    obs.stockAppreciationRateStdDev,
+    obs.stockAppreciationRate,
     obs.houseAppreciationRate,
     obs.mortgageStage1Length,
     obs.mortgageInterestRateStage1,
@@ -153,8 +175,7 @@ function makeScenario(
         salaryGrowth,
         rentGrowth,
         isBuying,
-        stockAppreciationRateMean,
-        stockAppreciationRateStdDev,
+        stockAppreciationRate,
         houseAppreciationRate,
         mortgageStage1Length,
         mortgageInterestRateStage1,
@@ -190,8 +211,7 @@ function makeScenario(
               salaryGrowth,
               rentGrowth,
               isBuying,
-              stockAppreciationRateMean,
-              stockAppreciationRateStdDev,
+              stockAppreciationRate,
               houseAppreciationRate,
               mortgageInterestRate,
               mortgageMonthlyPayment,
