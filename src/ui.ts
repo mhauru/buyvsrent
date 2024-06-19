@@ -13,6 +13,7 @@ export type Inputs = {
   mortgageInterestRateStage2: number;
   mortgageMonthlyPaymentStage2: number;
   mortgageOverpay: boolean;
+  inflation: RandomVariableDistribution;
   stockAppreciationRate: RandomVariableDistribution;
   houseAppreciationRate: RandomVariableDistribution;
   yearsToForecast: number;
@@ -72,14 +73,14 @@ const inputConfigs: InputConfig[] = [
     id: "salaryGrowth",
     inputType: "randomVariable",
     increment: 0.1,
-    label: "Salary growth (%), annual",
+    label: "Salary growth (%) over inflation, annual",
   },
   { id: "rent", inputType: "number", increment: 100, label: "Monthly rent" },
   {
     id: "rentGrowth",
     inputType: "randomVariable",
     increment: 0.1,
-    label: "Rent growth (%), annual",
+    label: "Rent growth (%) over house price growth, annual",
   },
   {
     id: "mortgageStage1Length",
@@ -118,16 +119,22 @@ const inputConfigs: InputConfig[] = [
     label: "Overpay when possible",
   },
   {
+    id: "inflation",
+    inputType: "randomVariable",
+    increment: 0.1,
+    label: "Inflation (%), annual",
+  },
+  {
     id: "stockAppreciationRate",
     inputType: "randomVariable",
     increment: 0.1,
-    label: "Stocks value appreciation (%), annual",
+    label: "Stocks value growth (%) over inflation, annual",
   },
   {
     id: "houseAppreciationRate",
     inputType: "randomVariable",
     increment: 0.1,
-    label: "House price growth (%), annual",
+    label: "House price growth (%) over inflation, annual",
   },
   {
     id: "yearsToForecast",
@@ -195,7 +202,7 @@ interface GroupConfig {
 
 const groupConfigs: GroupConfig[] = [
   {
-    inputs: ["isBuying", "cash", "salary", "salaryGrowth"],
+    inputs: ["isBuying", "cash", "salary"],
     label: "Personal finances",
     visibleWhen: "always",
   },
@@ -228,12 +235,18 @@ const groupConfigs: GroupConfig[] = [
     visibleWhen: "onlyIfBuying",
   },
   {
-    inputs: ["rent", "rentGrowth"],
+    inputs: ["rent"],
     label: "Renting",
     visibleWhen: "onlyIfRenting",
   },
   {
-    inputs: ["houseAppreciationRate", "stockAppreciationRate"],
+    inputs: [
+      "inflation",
+      "salaryGrowth",
+      "houseAppreciationRate",
+      "rentGrowth",
+      "stockAppreciationRate",
+    ],
     label: "Markets",
     visibleWhen: "always",
   },

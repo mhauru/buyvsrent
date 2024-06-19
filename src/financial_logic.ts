@@ -20,27 +20,25 @@ export interface AnnualSummary {
 
 function appreciateHouseValue(
   summary: AnnualSummary,
-  houseAppreciationRate: RandomGenerator,
+  houseAppreciationRate: number,
 ) {
-  const rate = houseAppreciationRate();
-  summary.houseValue *= 1 + rate / 100.0;
+  summary.houseValue *= 1 + houseAppreciationRate / 100.0;
 }
 
 function appreciateStockValue(
   summary: AnnualSummary,
-  stockAppreciationRate: RandomGenerator,
+  stockAppreciationRate: number,
 ) {
-  const rate = stockAppreciationRate();
-  summary.stockIsaValue *= 1 + rate / 100.0;
-  summary.stockNonIsaValue *= 1 + rate / 100.0;
+  summary.stockIsaValue *= 1 + stockAppreciationRate / 100.0;
+  summary.stockNonIsaValue *= 1 + stockAppreciationRate / 100.0;
 }
 
 function getSalary(summary: AnnualSummary) {
   summary.cashValue += summary.salary * 12;
 }
 
-function getPayRaise(summary: AnnualSummary, salaryGrowth: RandomGenerator) {
-  summary.salary *= 1 + salaryGrowth() / 100;
+function getPayRaise(summary: AnnualSummary, salaryGrowth: number) {
+  summary.salary *= 1 + salaryGrowth / 100;
 }
 
 function payRent(summary: AnnualSummary) {
@@ -49,8 +47,8 @@ function payRent(summary: AnnualSummary) {
   summary.moneySpent += annualRent;
 }
 
-function raiseRent(summary: AnnualSummary, rentGrowth: RandomGenerator) {
-  summary.rent *= 1 + rentGrowth() / 100;
+function raiseRent(summary: AnnualSummary, rentGrowth: number) {
+  summary.rent *= 1 + rentGrowth / 100;
 }
 
 function payMortgage(
@@ -161,11 +159,12 @@ function checkSummary(summary: AnnualSummary) {
 
 export function getNextSummary(
   summary: AnnualSummary,
-  salaryGrowth: RandomGenerator,
-  rentGrowth: RandomGenerator,
+  inflationGen: RandomGenerator,
+  salaryGrowthGen: RandomGenerator,
+  rentGrowthGen: RandomGenerator,
   isBuying: boolean,
-  stockAppreciationRate: RandomGenerator,
-  houseAppreciationRate: RandomGenerator,
+  stockAppreciationRateGen: RandomGenerator,
+  houseAppreciationRateGen: RandomGenerator,
   mortgageInterestRate: number,
   mortgageMonthlyPayment: number,
   mortgageOverpay: boolean,
@@ -175,6 +174,12 @@ export function getNextSummary(
   maintenanceRate: number,
 ): AnnualSummary {
   const nextSummary = { ...summary };
+  // Generate random values for this year
+  const inflation = inflationGen();
+  const salaryGrowth = inflation + salaryGrowthGen();
+  const stockAppreciationRate = inflation + stockAppreciationRateGen();
+  const houseAppreciationRate = inflation + houseAppreciationRateGen();
+  const rentGrowth = inflation + rentGrowthGen();
   // Expenses and income
   getSalary(nextSummary);
   payMortgage(nextSummary, mortgageMonthlyPayment, mortgageInterestRate);

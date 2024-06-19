@@ -22,7 +22,7 @@ const DEFAULT_INPUTS: Inputs = {
   cash: 315_000,
   mortgage: 200_000,
   salary: 2700,
-  salaryGrowth: { mean: 7, stdDev: 2 },
+  salaryGrowth: { mean: 5, stdDev: 2 },
   // The average gross rental yield, i.e. annual rent divided by house price, is around
   // 4.5% in London.
   // Source: https://www.trackcapital.co.uk/news-articles/uk-buy-to-let-yield-map/
@@ -35,16 +35,17 @@ const DEFAULT_INPUTS: Inputs = {
   mortgageInterestRateStage2: 7.99,
   mortgageMonthlyPaymentStage2: 1650,
   mortgageOverpay: true,
+  inflation: { mean: 2.0, stdDev: 2.0 },
   // House prices in London grew on average 4.4% between Jan 2005 and Jan 2024.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/housepriceindex/latest
-  houseAppreciationRate: { mean: 4.4, stdDev: 2 },
+  houseAppreciationRate: { mean: 2.4, stdDev: 2 },
   // Often quoted numbers for historical stock price growth are 6% and 7% over inflation.
   // CPIH grew by 2.9% annualised between January 2005 and Jan 2024.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23
   // BoE target is 2% inflation.
-  stockAppreciationRate: { mean: 9, stdDev: 5 },
+  stockAppreciationRate: { mean: 6, stdDev: 5 },
   // Rents are assumed to grow at the same rate as house prices. See above for house prices.
-  rentGrowth: { mean: 4.4, stdDev: 2 },
+  rentGrowth: { mean: 0, stdDev: 1 },
   yearsToForecast: 20,
   // Buying costs rough estimate from here:
   // https://www.zoopla.co.uk/discover/buying/buying-costs/
@@ -167,6 +168,7 @@ function makeScenario(
     obs.salaryGrowth,
     obs.rentGrowth,
     obs.isBuying,
+    obs.inflation,
     obs.stockAppreciationRate,
     obs.houseAppreciationRate,
     obs.mortgageStage1Length,
@@ -189,6 +191,7 @@ function makeScenario(
         salaryGrowthDist,
         rentGrowthDist,
         isBuying,
+        inflationDist,
         stockAppreciationRateDist,
         houseAppreciationRateDist,
         mortgageStage1Length,
@@ -209,13 +212,17 @@ function makeScenario(
 
         const rootGenerator = randomLcg(seed);
         for (let i = 0; i < numSamples; i++) {
-          const stockAppreciationRate = makeGenerator(
+          const inflationGen = makeGenerator(rootGenerator, inflationDist);
+          const stockAppreciationRateGen = makeGenerator(
             rootGenerator,
             stockAppreciationRateDist,
           );
-          const salaryGrowth = makeGenerator(rootGenerator, salaryGrowthDist);
-          const rentGrowth = makeGenerator(rootGenerator, rentGrowthDist);
-          const houseAppreciationRate = makeGenerator(
+          const salaryGrowthGen = makeGenerator(
+            rootGenerator,
+            salaryGrowthDist,
+          );
+          const rentGrowthGen = makeGenerator(rootGenerator, rentGrowthDist);
+          const houseAppreciationRateGen = makeGenerator(
             rootGenerator,
             houseAppreciationRateDist,
           );
@@ -234,11 +241,12 @@ function makeScenario(
             }
             const nextSummary = getNextSummary(
               lastSummary,
-              salaryGrowth,
-              rentGrowth,
+              inflationGen,
+              salaryGrowthGen,
+              rentGrowthGen,
               isBuying,
-              stockAppreciationRate,
-              houseAppreciationRate,
+              stockAppreciationRateGen,
+              houseAppreciationRateGen,
               mortgageInterestRate,
               mortgageMonthlyPayment,
               mortgageOverpay,
