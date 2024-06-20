@@ -79,8 +79,8 @@ body {
   display: flex;
   align-items: center;
   gap: 0.1em;
-  width: 100%; /* Ensure the container takes full width */
-  box-sizing: border-box; /* Adjusts for padding and borders */
+  width: 100%;
+  box-sizing: border-box; /* Include padding and border in total width */
 }
 
 .input-field.random-variable-mean-input,

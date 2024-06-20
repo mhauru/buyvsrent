@@ -22,7 +22,7 @@ const DEFAULT_INPUTS: Inputs = {
   cash: 315_000,
   mortgage: 200_000,
   salary: 2700,
-  salaryGrowth: { mean: 5, stdDev: 2 },
+  salaryGrowth: { mean: 5, stdDev: 3 },
   // The average gross rental yield, i.e. annual rent divided by house price, is around
   // 4.5% in London.
   // Source: https://www.trackcapital.co.uk/news-articles/uk-buy-to-let-yield-map/
@@ -35,17 +35,20 @@ const DEFAULT_INPUTS: Inputs = {
   mortgageInterestRateStage2: 7.99,
   mortgageMonthlyPaymentStage2: 1650,
   mortgageOverpay: true,
-  inflation: { mean: 2.0, stdDev: 2.0 },
-  // House prices in London grew on average 4.4% between Jan 2005 and Jan 2024.
+  // These are the mean and standard deviation of UK annual CPI 1989-2023.
+  // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23
+  inflation: { mean: 2.8, stdDev: 2.1 },
+  // These values are for annual growth over inflation for the average London house price 1989-2023.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/housepriceindex/latest
-  houseAppreciationRate: { mean: 2.4, stdDev: 2 },
-  // Often quoted numbers for historical stock price growth are 6% and 7% over inflation.
-  // CPIH grew by 2.9% annualised between January 2005 and Jan 2024.
-  // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23
-  // BoE target is 2% inflation.
-  stockAppreciationRate: { mean: 6, stdDev: 5 },
-  // Rents are assumed to grow at the same rate as house prices. See above for house prices.
-  rentGrowth: { mean: 0, stdDev: 1 },
+  // Note that the standard deviation is for the year-to-year variation in the growth of the price
+  // of the average home. The standard deviation for a _single_ home is likely far higher.
+  houseAppreciationRate: { mean: 3.6, stdDev: 8.9 },
+  // These values are for annual growth over inflation for the S&P 500 index 1989-2023.
+  // Source: https://www.macrotrends.net/2324/sp-500-historical-chart-data
+  stockAppreciationRate: { mean: 7.1, stdDev: 17.4 },
+  // This is rent growth over house price growth. The mean is zero because we
+  // assume that by default the two are coupled. The standard deviation is an unjustified guess.
+  rentGrowth: { mean: 0, stdDev: 3 },
   yearsToForecast: 20,
   // Buying costs rough estimate from here:
   // https://www.zoopla.co.uk/discover/buying/buying-costs/
