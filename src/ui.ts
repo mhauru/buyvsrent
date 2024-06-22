@@ -61,7 +61,7 @@ const inputConfigs: InputConfig[] = [
     id: "mortgage",
     inputType: "number",
     increment: 1000,
-    label: "Mortgage",
+    label: "Mortgage size",
   },
   {
     id: "salary",
@@ -86,7 +86,7 @@ const inputConfigs: InputConfig[] = [
     id: "mortgageStage1Length",
     inputType: "number",
     increment: 1,
-    label: "Mortgage stage 1 length",
+    label: "Mortgage stage 1 length (years)",
   },
   {
     id: "mortgageInterestRateStage1",
@@ -146,7 +146,7 @@ const inputConfigs: InputConfig[] = [
     id: "buyingCosts",
     inputType: "number",
     increment: 100,
-    label: "Buying costs (survey, conveyancing fee, etc.)",
+    label: "Buying costs (survey, solicitor, etc.)",
   },
   {
     id: "firstTimeBuyer",
@@ -285,6 +285,38 @@ function createInputElement(
   return input;
 }
 
+function createInputDiv(
+  id: string,
+  idSuffix: number,
+  type: string,
+  value: string | number | boolean | RandomVariableDistribution,
+  step: string | number,
+  label: string,
+): [HTMLInputElement[], HTMLDivElement] {
+  if (type == "randomVariable") {
+    return createRandomVariableInputDiv(
+      id,
+      idSuffix,
+      value as RandomVariableDistribution,
+      step,
+      label,
+    );
+  }
+  const inputElement = createInputElement(
+    id,
+    idSuffix,
+    type,
+    value as string | number | boolean,
+    step,
+  );
+  const labelElement = createLabelElement(inputElement.id, label);
+  const div = document.createElement("div");
+  div.appendChild(labelElement);
+  div.appendChild(inputElement);
+  div.classList.add("input-div");
+  return [[inputElement], div];
+}
+
 export type RandomVariableDistribution = {
   mean: number;
   stdDev: number;
@@ -332,38 +364,6 @@ function createRandomVariableInputDiv(
   inputsContainer.appendChild(stdDevInputElement);
   div.appendChild(inputsContainer);
   return [[meanInputElement, stdDevInputElement], div];
-}
-
-function createInputDiv(
-  id: string,
-  idSuffix: number,
-  type: string,
-  value: string | number | boolean | RandomVariableDistribution,
-  step: string | number,
-  label: string,
-): [HTMLInputElement[], HTMLDivElement] {
-  if (type == "randomVariable") {
-    return createRandomVariableInputDiv(
-      id,
-      idSuffix,
-      value as RandomVariableDistribution,
-      step,
-      label,
-    );
-  }
-  const inputElement = createInputElement(
-    id,
-    idSuffix,
-    type,
-    value as string | number | boolean,
-    step,
-  );
-  const labelElement = createLabelElement(inputElement.id, label);
-  const div = document.createElement("div");
-  div.appendChild(labelElement);
-  div.appendChild(inputElement);
-  div.classList.add("input-div");
-  return [[inputElement], div];
 }
 
 function createGroup(

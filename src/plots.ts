@@ -40,20 +40,20 @@ interface Dataset {
 function statsOverSamples(
   summaries: Array<Array<AnnualSummary>>,
   f: (arg1: AnnualSummary) => number,
-): { median: Array<number>; p10: Array<number>; p90: Array<number> } {
+): { median: Array<number>; p20: Array<number>; p80: Array<number> } {
   const transposed = summaries[0].map((_, colIndex) =>
     summaries.map((row) => row[colIndex]),
   );
   const medianValues = transposed.map((innerArray) =>
     median(innerArray.map(f)),
   );
-  const p10Values = transposed.map((innerArray) =>
-    quantileSeq(innerArray.map(f), 0.1),
+  const p20Values = transposed.map((innerArray) =>
+    quantileSeq(innerArray.map(f), 0.2),
   );
-  const p90Values = transposed.map((innerArray) =>
-    quantileSeq(innerArray.map(f), 0.9),
+  const p80Values = transposed.map((innerArray) =>
+    quantileSeq(innerArray.map(f), 0.8),
   );
-  return { median: medianValues, p10: p10Values, p90: p90Values };
+  return { median: medianValues, p20: p20Values, p80: p80Values };
 }
 
 function listToPoints(list: Array<number>): Array<PlotPoint> {
@@ -102,7 +102,7 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
 
       const createDataset = (
         label: string,
-        data: { median: Array<number>; p10: Array<number>; p90: Array<number> },
+        data: { median: Array<number>; p20: Array<number>; p80: Array<number> },
       ) => {
         const color = getColorForLabel(label);
         const backgroundColor = color.copy({ opacity: 0.1 });
@@ -116,16 +116,16 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
             pointRadius: 3,
           },
           {
-            label: `${label} (90th percentile)`,
-            data: listToPoints(data.p90),
+            label: `${label} (80th percentile)`,
+            data: listToPoints(data.p80),
             showLine: false,
             backgroundColor: backgroundColor,
             fill: "+1",
             pointRadius: 0,
           },
           {
-            label: `${label} (10th percentile)`,
-            data: listToPoints(data.p10),
+            label: `${label} (20th percentile)`,
+            data: listToPoints(data.p20),
             showLine: false,
             backgroundColor: backgroundColor,
             fill: "-1",
