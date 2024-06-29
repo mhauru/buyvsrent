@@ -2,13 +2,7 @@ import { fromEvent, Observable, combineLatest, BehaviorSubject } from "rxjs";
 import { randomNormal, randomLcg } from "d3-random";
 import { map, startWith } from "rxjs/operators";
 import { mean } from "mathjs";
-import {
-  RandomGenerator,
-  AnnualSummary,
-  getNextSummary,
-  getInitialSummary,
-  computeCapitalGainsTax,
-} from "./financial_logic";
+import * as fl from "./financial_logic";
 import { Inputs, RandomVariableDistribution, createPropertyInputs } from "./ui";
 import { MinMaxObject, createPlot } from "./plots";
 
@@ -61,6 +55,7 @@ const DEFAULT_INPUTS: Inputs = {
   maintenanceRate: 2,
   homeInsurance: 300,
   numSamples: 100,
+  correctInflation: true,
   seed: 0.0,
 };
 
@@ -121,7 +116,7 @@ type InputObservables = {
 function makeGenerator(
   rootGenerator,
   distribution: RandomVariableDistribution,
-): RandomGenerator {
+): fl.RandomGenerator {
   return randomNormal.source(rootGenerator)(
     distribution.mean,
     distribution.stdDev,
@@ -155,7 +150,7 @@ function makeScenario(
     }
   }
 
-  const summary0$: Observable<AnnualSummary> = combineLatest([
+  const summary0$: Observable<fl.AnnualSummary> = combineLatest([
     obs.isBuying,
     obs.housePrice,
     obs.cash,
@@ -164,9 +159,9 @@ function makeScenario(
     obs.mortgage,
     obs.buyingCosts,
     obs.firstTimeBuyer,
-  ]).pipe(map((args) => getInitialSummary(...args)));
+  ]).pipe(map((args) => fl.getInitialSummary(...args)));
 
-  const summaries$: Observable<Array<Array<AnnualSummary>>> = combineLatest([
+  const summaries$: Observable<Array<Array<fl.AnnualSummary>>> = combineLatest([
     summary0$,
     obs.salaryGrowth,
     obs.rentGrowth,
@@ -211,7 +206,7 @@ function makeScenario(
         numSamples,
         seed,
       ]) => {
-        const samples: Array<Array<AnnualSummary>> = [];
+        const samples: Array<Array<fl.AnnualSummary>> = [];
 
         const rootGenerator = randomLcg(seed);
         for (let i = 0; i < numSamples; i++) {
@@ -242,7 +237,7 @@ function makeScenario(
               mortgageMonthlyPayment = mortgageMonthlyPaymentStage2;
               mortgageInterestRate = mortgageInterestRateStage2;
             }
-            const nextSummary = getNextSummary(
+            const nextSummary = fl.getNextSummary(
               lastSummary,
               inflationGen,
               salaryGrowthGen,
@@ -268,45 +263,48 @@ function makeScenario(
     ),
   );
 
-  createPlot(idNumber, canvas, summaries$, axisLimitsSubject);
+  createPlot(
+    idNumber,
+    canvas,
+    summaries$,
+    axisLimitsSubject,
+    obs.correctInflation,
+  );
 
   function numberToStringPretty(value: number) {
     return Math.round(value).toLocaleString();
   }
 
-  summaries$.subscribe((summaries: AnnualSummary[][]) => {
-    const lastSummaries = summaries.map(
-      (history) => history[history.length - 1],
-    );
-    const postTaxWealth = mean(
-      lastSummaries.map((s) => {
-        return (
-          s.houseValue +
-          s.cashValue +
-          s.stockIsaValue +
-          s.stockNonIsaValue -
-          s.mortgageBalance -
-          computeCapitalGainsTax(s)
-        );
-      }),
-    );
-    summaryValueSpans.houseValue.innerHTML = numberToStringPretty(
-      mean(lastSummaries.map((s) => s.houseValue)),
-    );
-    summaryValueSpans.salary.innerHTML = numberToStringPretty(
-      mean(lastSummaries.map((s) => s.salary)),
-    );
-    summaryValueSpans.wealth.innerHTML = numberToStringPretty(postTaxWealth);
-    summaryValueSpans.rent.innerHTML = numberToStringPretty(
-      mean(lastSummaries.map((s) => s.rent)),
-    );
-    summaryValueSpans.stockIsaValue.innerHTML = numberToStringPretty(
-      mean(lastSummaries.map((s) => s.stockIsaValue)),
-    );
-    summaryValueSpans.stockNonIsaValue.innerHTML = numberToStringPretty(
-      mean(lastSummaries.map((s) => s.stockNonIsaValue)),
-    );
-  });
+  combineLatest([summaries$, obs.correctInflation]).subscribe(
+    ([summaries, correctInflation]) => {
+      const lastSummaries = summaries.map(
+        (history) => history[history.length - 1],
+      );
+      const postTaxWealth = mean(
+        lastSummaries.map((s) => {
+          return fl.postTaxWealth(s, correctInflation);
+        }),
+      );
+      summaryValueSpans.houseValue.innerHTML = numberToStringPretty(
+        mean(lastSummaries.map((s) => fl.houseValue(s, correctInflation))),
+      );
+      summaryValueSpans.salary.innerHTML = numberToStringPretty(
+        mean(lastSummaries.map((s) => fl.salary(s, correctInflation))),
+      );
+      summaryValueSpans.wealth.innerHTML = numberToStringPretty(postTaxWealth);
+      summaryValueSpans.rent.innerHTML = numberToStringPretty(
+        mean(lastSummaries.map((s) => fl.rent(s, correctInflation))),
+      );
+      summaryValueSpans.stockIsaValue.innerHTML = numberToStringPretty(
+        mean(lastSummaries.map((s) => fl.stockIsaValue(s, correctInflation))),
+      );
+      summaryValueSpans.stockNonIsaValue.innerHTML = numberToStringPretty(
+        mean(
+          lastSummaries.map((s) => fl.stockNonIsaValue(s, correctInflation)),
+        ),
+      );
+    },
+  );
 
   let currentAllInputs: InputsById;
   allInputsSubject.subscribe({

@@ -1,4 +1,4 @@
-import { Observable } from "rxjs";
+import { Observable, combineLatest } from "rxjs";
 import { map } from "rxjs/operators";
 import { median, quantileSeq } from "mathjs";
 import { color, Color } from "d3-color";
@@ -16,7 +16,7 @@ import {
   CategoryScale,
   Filler,
 } from "chart.js";
-import { AnnualSummary, computeCapitalGainsTax } from "./financial_logic";
+import * as fl from "./financial_logic";
 
 export type MinMaxObject = {
   minY: { [key: number]: number };
@@ -44,8 +44,8 @@ interface Stats {
 
 // Apply f to each AnnualSummary, and return a list of medians and percentiles of their values.
 function statsOverSamples(
-  summaries: Array<Array<AnnualSummary>>,
-  f: (arg1: AnnualSummary) => number,
+  summaries: Array<Array<fl.AnnualSummary>>,
+  f: (arg1: fl.AnnualSummary) => number,
 ): Stats {
   const transposed = summaries[0].map((_, colIndex) =>
     summaries.map((row) => row[colIndex]),
@@ -106,30 +106,38 @@ function getColorForLabel(label: string): Color {
   return colors[label] || "rgba(0, 0, 0, 0.6)";
 }
 
-export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
-  const datasets$: Observable<Array<Dataset>> = summaries$.pipe(
-    map((summaries: Array<Array<AnnualSummary>>) => {
-      let postTaxWealths = statsOverSamples(summaries, (s) => {
-        return (
-          s.houseValue +
-          s.cashValue +
-          s.stockIsaValue +
-          s.stockNonIsaValue -
-          s.mortgageBalance -
-          computeCapitalGainsTax(s)
-        );
-      });
+export function createPlot(
+  idNumber,
+  canvas,
+  summaries$: Observable<Array<Array<fl.AnnualSummary>>>,
+  axisLimitsSubject,
+  correctInflationObs: Observable<boolean>,
+) {
+  const datasets$: Observable<Array<Dataset>> = combineLatest([
+    summaries$,
+    correctInflationObs,
+  ]).pipe(
+    map(([summaries, correctInflation]) => {
+      let postTaxWealths = statsOverSamples(summaries, (s) =>
+        fl.postTaxWealth(s, correctInflation),
+      );
       let mortgageBalances = statsOverSamples(
         summaries,
-        (s) => -s.mortgageBalance,
+        (s) => -fl.mortgageBalance(s, correctInflation),
       );
-      let cashValues = statsOverSamples(summaries, (s) => s.cashValue);
-      let postTaxStocksValues = statsOverSamples(
+      let cashValues = statsOverSamples(summaries, (s) =>
+        fl.cashValue(s, correctInflation),
+      );
+      let postTaxStocksValues = statsOverSamples(summaries, (s) =>
+        fl.postTaxStocksValue(s, correctInflation),
+      );
+      let houseValues = statsOverSamples(summaries, (s) =>
+        fl.houseValue(s, correctInflation),
+      );
+      let moneySpent = statsOverSamples(
         summaries,
-        (s) => s.stockIsaValue + s.stockNonIsaValue - computeCapitalGainsTax(s),
+        (s) => -fl.moneySpent(s, correctInflation),
       );
-      let houseValues = statsOverSamples(summaries, (s) => s.houseValue);
-      let moneySpent = statsOverSamples(summaries, (s) => -s.moneySpent);
 
       // Skip plotting results that are trivial.
       if (statsAreZeros(cashValues)) cashValues = null;

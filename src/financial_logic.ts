@@ -15,6 +15,7 @@ export interface AnnualSummary {
   stockNonIsaValuePaid: number;
   mortgageBalance: number;
   moneySpent: number;
+  cumulativeInflation: number;
   yearNumber: number;
 }
 
@@ -202,6 +203,7 @@ export function getNextSummary(
   investSurplusCashInStocks(nextSummary);
   // Clean-up
   checkSummary(nextSummary);
+  nextSummary.cumulativeInflation *= 1 + inflation / 100;
   nextSummary.yearNumber += 1;
   return nextSummary;
 }
@@ -225,6 +227,7 @@ export function getInitialSummary(
     stockNonIsaValue: 0,
     stockNonIsaValuePaid: 0,
     mortgageBalance: 0,
+    cumulativeInflation: 1.0,
     yearNumber: 0,
     moneySpent: 0,
   };
@@ -235,9 +238,107 @@ export function getInitialSummary(
   return summary;
 }
 
-export function computeCapitalGainsTax(summary: AnnualSummary) {
+function computeCapitalGainsTax(summary: AnnualSummary) {
   const gain = summary.stockNonIsaValue - summary.stockNonIsaValuePaid;
   return (
     (Math.max(gain - CAPITAL_GAINS_ALLOWANCE, 0) * CAPITAL_GAINS_RATE) / 100
   );
 }
+
+export function mortgageBalance(
+  s: AnnualSummary,
+  correctInflation: boolean = false,
+): number {
+  let value = s.mortgageBalance;
+  if (correctInflation) value /= s.cumulativeInflation;
+  return value;
+}
+
+export function moneySpent(
+  s: AnnualSummary,
+  correctInflation: boolean = false,
+): number {
+  let value = s.moneySpent;
+  if (correctInflation) value /= s.cumulativeInflation;
+  return value;
+}
+
+export function salary(
+  s: AnnualSummary,
+  correctInflation: boolean = false,
+): number {
+  let value = s.salary;
+  if (correctInflation) value /= s.cumulativeInflation;
+  return value;
+}
+
+export function rent(
+  s: AnnualSummary,
+  correctInflation: boolean = false,
+): number {
+  let value = s.rent;
+  if (correctInflation) value /= s.cumulativeInflation;
+  return value;
+}
+
+export function cashValue(
+  s: AnnualSummary,
+  correctInflation: boolean = false,
+): number {
+  let value = s.cashValue;
+  if (correctInflation) value /= s.cumulativeInflation;
+  return value;
+}
+
+export function houseValue(
+  s: AnnualSummary,
+  correctInflation: boolean = false,
+): number {
+  let value = s.houseValue;
+  if (correctInflation) value /= s.cumulativeInflation;
+  return value;
+}
+
+export function stockIsaValue(
+  s: AnnualSummary,
+  correctInflation: boolean = false,
+): number {
+  let value = s.stockIsaValue;
+  if (correctInflation) value /= s.cumulativeInflation;
+  return value;
+}
+
+export function stockNonIsaValue(
+  s: AnnualSummary,
+  correctInflation: boolean = false,
+): number {
+  let value = s.stockNonIsaValue;
+  if (correctInflation) value /= s.cumulativeInflation;
+  return value;
+}
+
+export function postTaxStocksValue(
+  s: AnnualSummary,
+  correctInflation: boolean = false,
+): number {
+  let value = s.stockIsaValue + s.stockNonIsaValue - computeCapitalGainsTax(s);
+  if (correctInflation) value /= s.cumulativeInflation;
+  return value;
+}
+
+export function postTaxWealth(
+  s: AnnualSummary,
+  correctInflation: boolean = false,
+): number {
+  let value =
+    s.houseValue +
+    s.cashValue +
+    s.stockIsaValue +
+    s.stockNonIsaValue -
+    s.mortgageBalance -
+    computeCapitalGainsTax(s);
+  if (correctInflation) value /= s.cumulativeInflation;
+  return value;
+}
+
+export function summaryOutputs(summary: AnnualSummary) {}

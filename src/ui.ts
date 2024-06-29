@@ -25,6 +25,7 @@ export type Inputs = {
   homeInsurance: number;
   seed: number;
   numSamples: number;
+  correctInflation: boolean;
 };
 
 export type PropertyInputs = {
@@ -238,6 +239,14 @@ const inputConfigs: InputConfig[] = [
     tooltip:
       "The calculator simulates many possible futures, with different randomly sampled numbers for things like inflation and house price growth. The results are then aggregated. A higher number of samples means more accurate results, but also makes the calculator slower.",
   },
+  {
+    id: "correctInflation",
+    inputType: "checkbox",
+    increment: "",
+    label: "Correct outputs for inflation",
+    tooltip:
+      "Whether the results should be corrected for inflation. If ticked, e.g. your total wealth in 20 years time will be expressed in today's currency, with inflation having been subtracted.",
+  },
 ];
 
 type VisibilityCondition = "onlyIfBuying" | "onlyIfRenting" | "always";
@@ -299,7 +308,7 @@ const groupConfigs: GroupConfig[] = [
     visibleWhen: "always",
   },
   {
-    inputs: ["yearsToForecast", "numSamples", "seed"],
+    inputs: ["yearsToForecast", "correctInflation", "numSamples", "seed"],
     label: "Simulation",
     visibleWhen: "always",
   },
