@@ -36,6 +36,7 @@ interface InputConfig {
   inputType: "checkbox" | "number" | "randomVariable";
   increment: number | string;
   label: string;
+  tooltip: string | null;
 }
 
 const inputConfigs: InputConfig[] = [
@@ -44,151 +45,192 @@ const inputConfigs: InputConfig[] = [
     inputType: "checkbox",
     increment: 1000,
     label: "Buying instead of renting",
+    tooltip: null,
   },
   {
     id: "housePrice",
     inputType: "number",
     increment: 1000,
     label: "House price",
+    tooltip: null,
   },
   {
     id: "cash",
     inputType: "number",
     increment: 1000,
     label: "Cash at start",
+    tooltip: null,
   },
   {
     id: "mortgage",
     inputType: "number",
     increment: 1000,
     label: "Mortgage size",
+    tooltip: null,
   },
   {
     id: "salary",
     inputType: "number",
     increment: 100,
     label: "Available monthly salary",
+    tooltip:
+      "This is the part of your salary that is available for paying rent/mortgage and investing. It is your salary at the start of the simulation, and will be increased automatically as time passes.",
   },
   {
     id: "salaryGrowth",
     inputType: "randomVariable",
     increment: 0.1,
     label: "Salary growth (%) over inflation, annual",
+    tooltip: null,
   },
-  { id: "rent", inputType: "number", increment: 100, label: "Monthly rent" },
+  {
+    id: "rent",
+    inputType: "number",
+    increment: 100,
+    label: "Monthly rent",
+    tooltip: null,
+  },
   {
     id: "rentGrowth",
     inputType: "randomVariable",
     increment: 0.1,
     label: "Rent growth (%) over house price growth, annual",
+    tooltip: null,
   },
   {
     id: "mortgageStage1Length",
     inputType: "number",
     increment: 1,
     label: "Mortgage stage 1 length (years)",
+    tooltip:
+      "Mortgages often come in a two stage system, where for the first few years one has a lower, fixed rate and monthly payment. After that the rate rises and becomes variable and the monthly payment rises. This is the length of the first part.",
   },
   {
     id: "mortgageInterestRateStage1",
     inputType: "number",
     increment: 0.1,
     label: "Interest rate (%), stage 1, annual",
+    tooltip: null,
   },
   {
     id: "mortgageMonthlyPaymentStage1",
     inputType: "number",
     increment: 100,
     label: "Monthly payment, stage 1",
+    tooltip: null,
   },
   {
     id: "mortgageInterestRateStage2",
     inputType: "number",
     increment: 0.1,
     label: "Interest rate (%), stage 2, annual",
+    tooltip:
+      "Note that in reality this rate is typically variable. Maybe it should depend on inflation, but it currently doesn't.",
   },
   {
     id: "mortgageMonthlyPaymentStage2",
     inputType: "number",
     increment: 100,
     label: "Monthly payment, stage 2",
+    tooltip: null,
   },
   {
     id: "mortgageOverpay",
     inputType: "checkbox",
     increment: "",
     label: "Overpay when possible",
+    tooltip:
+      "What to do if there's money left over at the end of the year? With this checked, it is primarily used to pay off the mortgage early. Otherwise it is invested in stocks.",
   },
   {
     id: "inflation",
     inputType: "randomVariable",
     increment: 0.1,
     label: "Inflation (%), annual",
+    tooltip: null,
   },
   {
     id: "stockAppreciationRate",
     inputType: "randomVariable",
     increment: 0.1,
     label: "Stocks value growth (%) over inflation, annual",
+    tooltip: null,
   },
   {
     id: "houseAppreciationRate",
     inputType: "randomVariable",
     increment: 0.1,
     label: "House price growth (%) over inflation, annual",
+    tooltip: null,
   },
   {
     id: "yearsToForecast",
     inputType: "number",
     increment: 1,
     label: "Years to forecast",
+    tooltip: null,
   },
   {
     id: "buyingCosts",
     inputType: "number",
     increment: 100,
     label: "Buying costs (survey, solicitor, etc.)",
+    tooltip:
+      "All the one-off costs of buying a house, except stamp duty, which is calculated separately.",
   },
   {
     id: "firstTimeBuyer",
     inputType: "checkbox",
     increment: "",
     label: "First time buyer",
+    tooltip: null,
   },
   {
     id: "groundRent",
     inputType: "number",
     increment: 50,
     label: "Ground rent",
+    tooltip:
+      "Note that you should probably set either a ground rent and no service charge, or the other way around, depending on whether you buy a leasehold or a freehold.",
   },
   {
     id: "serviceChargeRate",
     inputType: "number",
     increment: 0.1,
     label: "Service charge, % of value",
+    tooltip:
+      "Note that you should probably set either ground rent and no service charge, or the other way around, depending on whether you buy a leasehold or a freehold.",
   },
   {
     id: "maintenanceRate",
     inputType: "number",
     increment: 0.1,
-    label: "Maintenance costs, % of value",
+    label: "Maintenance costs, % of value, annual",
+    tooltip: null,
   },
   {
     id: "homeInsurance",
     inputType: "number",
     increment: 50,
     label: "Home insurance",
+    tooltip:
+      "This should be only for the building, not for contents. In other words, the part you have to pay because you own rather than rent.",
   },
   {
     id: "seed",
     inputType: "number",
     increment: 0.1,
     label: "Random seed",
+    tooltip:
+      "Should be between 0 and 1. Different seeds cause different random numbers to be generated, from the same distribution.",
   },
   {
     id: "numSamples",
     inputType: "number",
     increment: 100,
     label: "Number of simulations",
+    tooltip:
+      "The calculator simulates many possible futures, with different randomly sampled numbers for things like inflation and house price growth. The results are then aggregated. A higher number of samples means more accurate results, but also makes the calculator slower.",
   },
 ];
 
@@ -260,9 +302,22 @@ const groupConfigs: GroupConfig[] = [
 function createLabelElement(forId: string, text: string): HTMLLabelElement {
   const label = document.createElement("label");
   label.htmlFor = forId;
-  label.innerText = text;
+  label.innerHTML = text; // Use innerHTML to allow flexible insertion of tooltip button
   label.classList.add("input-label");
   return label;
+}
+
+function createTooltipButton(tooltipText: string): HTMLSpanElement {
+  const tooltipButton = document.createElement("span");
+  tooltipButton.classList.add("tooltip-button");
+  tooltipButton.innerText = "?";
+
+  const tooltipBox = document.createElement("div");
+  tooltipBox.classList.add("tooltip-box");
+  tooltipBox.innerText = tooltipText;
+  tooltipButton.appendChild(tooltipBox);
+
+  return tooltipButton;
 }
 
 function createInputElement(
@@ -292,6 +347,7 @@ function createInputDiv(
   value: string | number | boolean | RandomVariableDistribution,
   step: string | number,
   label: string,
+  tooltip: string | null = null,
 ): [HTMLInputElement[], HTMLDivElement] {
   if (type == "randomVariable") {
     return createRandomVariableInputDiv(
@@ -312,6 +368,12 @@ function createInputDiv(
   const labelElement = createLabelElement(inputElement.id, label);
   const div = document.createElement("div");
   div.appendChild(labelElement);
+
+  if (tooltip) {
+    const tooltipButton = createTooltipButton(tooltip);
+    labelElement.appendChild(tooltipButton);
+  }
+
   div.appendChild(inputElement);
   div.classList.add("input-div");
   return [[inputElement], div];
@@ -462,6 +524,7 @@ export function createPropertyInputs(
       inputs[config.id],
       config.increment,
       config.label,
+      config.tooltip,
     );
     propertyInputs[config.id] = inputElements;
     propertyInputDivs[config.id] = inputDiv;

@@ -36,11 +36,17 @@ interface Dataset {
   showLine: boolean;
 }
 
+interface Stats {
+  median: Array<number>;
+  p20: Array<number>;
+  p80: Array<number>;
+}
+
 // Apply f to each AnnualSummary, and return a list of medians and percentiles of their values.
 function statsOverSamples(
   summaries: Array<Array<AnnualSummary>>,
   f: (arg1: AnnualSummary) => number,
-): { median: Array<number>; p20: Array<number>; p80: Array<number> } {
+): Stats {
   const transposed = summaries[0].map((_, colIndex) =>
     summaries.map((row) => row[colIndex]),
   );
@@ -54,6 +60,31 @@ function statsOverSamples(
     quantileSeq(innerArray.map(f), 0.8),
   );
   return { median: medianValues, p20: p20Values, p80: p80Values };
+}
+
+function statsAreZeros(stats: Stats): boolean {
+  return (
+    stats.median.every((x) => x === 0) &&
+    stats.p20.every((x) => x === 0) &&
+    stats.p80.every((x) => x === 0)
+  );
+}
+
+function arraysEqual(arr1: any[], arr2: any[]): boolean {
+  return (
+    arr1.length === arr2.length &&
+    arr1.every((value, index) => value === arr2[index])
+  );
+}
+
+function statsEqual(s1: Stats, s2: Stats): boolean {
+  if (s1 === null) return s2 === null;
+  if (s2 === null) return s1 === null;
+  return (
+    arraysEqual(s1.median, s2.median) &&
+    arraysEqual(s1.p20, s2.p20) &&
+    arraysEqual(s1.p80, s2.p80)
+  );
 }
 
 function listToPoints(list: Array<number>): Array<PlotPoint> {
@@ -78,7 +109,7 @@ function getColorForLabel(label: string): Color {
 export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
   const datasets$: Observable<Array<Dataset>> = summaries$.pipe(
     map((summaries: Array<Array<AnnualSummary>>) => {
-      const postTaxWealths = statsOverSamples(summaries, (s) => {
+      let postTaxWealths = statsOverSamples(summaries, (s) => {
         return (
           s.houseValue +
           s.cashValue +
@@ -88,17 +119,28 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
           computeCapitalGainsTax(s)
         );
       });
-      const mortgageBalances = statsOverSamples(
+      let mortgageBalances = statsOverSamples(
         summaries,
         (s) => -s.mortgageBalance,
       );
-      const cashValues = statsOverSamples(summaries, (s) => s.cashValue);
-      const postTaxStocksValues = statsOverSamples(
+      let cashValues = statsOverSamples(summaries, (s) => s.cashValue);
+      let postTaxStocksValues = statsOverSamples(
         summaries,
         (s) => s.stockIsaValue + s.stockNonIsaValue - computeCapitalGainsTax(s),
       );
-      const houseValues = statsOverSamples(summaries, (s) => s.houseValue);
-      const moneySpent = statsOverSamples(summaries, (s) => -s.moneySpent);
+      let houseValues = statsOverSamples(summaries, (s) => s.houseValue);
+      let moneySpent = statsOverSamples(summaries, (s) => -s.moneySpent);
+
+      // Skip plotting results that are trivial.
+      if (statsAreZeros(cashValues)) cashValues = null;
+      if (statsAreZeros(houseValues)) houseValues = null;
+      if (statsAreZeros(postTaxStocksValues)) postTaxStocksValues = null;
+      if (statsAreZeros(mortgageBalances)) mortgageBalances = null;
+      if (statsAreZeros(moneySpent)) moneySpent = null;
+      if (statsEqual(postTaxStocksValues, postTaxWealths))
+        postTaxWealths = null;
+      if (statsEqual(houseValues, postTaxWealths)) postTaxWealths = null;
+      if (statsEqual(cashValues, postTaxWealths)) postTaxWealths = null;
 
       const createDataset = (
         label: string,
@@ -108,7 +150,7 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
         const backgroundColor = color.copy({ opacity: 0.1 });
         return [
           {
-            label: `${label} (median)`,
+            label: `${label}`,
             data: listToPoints(data.median),
             showLine: true,
             borderColor: color,
@@ -134,14 +176,24 @@ export function createPlot(idNumber, canvas, summaries$, axisLimitsSubject) {
         ];
       };
 
-      return [
-        ...createDataset("Total wealth post tax", postTaxWealths),
-        ...createDataset("House value", houseValues),
-        ...createDataset("Stocks post tax", postTaxStocksValues),
-        ...createDataset("Cash", cashValues),
-        ...createDataset("Mortgage", mortgageBalances),
-        ...createDataset("Money spent", moneySpent),
-      ];
+      const return_value = [];
+      if (postTaxWealths !== null)
+        return_value.push(
+          ...createDataset("Total wealth post tax", postTaxWealths),
+        );
+      if (houseValues !== null)
+        return_value.push(...createDataset("House value", houseValues));
+      if (postTaxStocksValues !== null)
+        return_value.push(
+          ...createDataset("Stocks post tax", postTaxStocksValues),
+        );
+      if (cashValues !== null)
+        return_value.push(...createDataset("Cash", cashValues));
+      if (mortgageBalances !== null)
+        return_value.push(...createDataset("Mortgage", mortgageBalances));
+      if (moneySpent !== null)
+        return_value.push(...createDataset("Money spent", moneySpent));
+      return return_value;
     }),
   );
 

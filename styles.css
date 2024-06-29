@@ -136,6 +136,7 @@ body {
   align-items: flex-start;
   width: 100%; /* Ensure the div takes full width */
   box-sizing: border-box; /* Include padding and border in the total width */
+  position: relative; /* For positioning the tooltip box */
 }
 
 .input-label {
@@ -146,6 +147,8 @@ body {
   color: #333;
   margin-bottom: 0.5em;
   box-sizing: border-box;
+  display: inline; /* Inline to allow wrapping */
+  position: relative; /* To position the tooltip button */
 }
 
 .input-field {
@@ -155,6 +158,39 @@ body {
   border-radius: 4px;
   box-sizing: border-box; /* Include padding and border in the total width */
   width: 100%; /* Ensure the input respects the parent's width */
+}
+
+.tooltip-button {
+  background-color: transparent;
+  border: none;
+  color: #555; /* Subtle color to blend in */
+  cursor: pointer;
+  font-size: 0.9em;
+  text-decoration: underline; /* Underlined question mark */
+  padding: 0;
+  margin-left: 0.3em; /* Small space between label text and question mark */
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-button:hover .tooltip-box {
+  display: block;
+}
+
+.tooltip-box {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 200px;
+  padding: 0.5em;
+  background-color: #333;
+  color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 1.0em;
+  z-index: 100;
+  margin-top: 0.5em; /* Space between button and tooltip */
 }
 
 .canvas-container {

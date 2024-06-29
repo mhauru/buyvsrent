@@ -135,6 +135,7 @@ function buyHouse(
     summary.mortgageBalance += mortgage;
     summary.moneySpent += stampDuty + buyingCosts;
     summary.houseValue += housePrice;
+    summary.rent = 0;
   }
 }
 
