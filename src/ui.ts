@@ -59,7 +59,8 @@ const inputConfigs: InputConfig[] = [
     inputType: "number",
     increment: 1000,
     label: "Cash at start",
-    tooltip: null,
+    tooltip:
+      "The amount of capital you start with. This should cover the house price minus mortgage, plus any buying costs such as stamp duty. If you're renting rather than buying, this whole sum is invested in stocks in year 0.",
   },
   {
     id: "mortgage",
@@ -81,7 +82,8 @@ const inputConfigs: InputConfig[] = [
     inputType: "randomVariable",
     increment: 0.1,
     label: "Salary growth (%) over inflation, annual",
-    tooltip: null,
+    tooltip:
+      "Annual salary growth, on top of inflation. Assumed to be a normal distributed random variable with th given mean and standard deviation. This one is tricky to estimate, because one may for instance change careers. I have no good basis for the default values I've chosen here.",
   },
   {
     id: "rent",
@@ -95,7 +97,8 @@ const inputConfigs: InputConfig[] = [
     inputType: "randomVariable",
     increment: 0.1,
     label: "Rent growth (%) over house price growth, annual",
-    tooltip: null,
+    tooltip:
+      "Annual rent increase, on top of house price increase. Assumed to be a normal distributed random variable with th given mean and standard deviation. Note that usually rents rise with house prices, which is why the mean is zero. I haven't found a good source for the standard deviation, so I just guessed something for the default.",
   },
   {
     id: "mortgageStage1Length",
@@ -103,7 +106,7 @@ const inputConfigs: InputConfig[] = [
     increment: 1,
     label: "Mortgage stage 1 length (years)",
     tooltip:
-      "Mortgages often come in a two stage system, where for the first few years one has a lower, fixed rate and monthly payment. After that the rate rises and becomes variable and the monthly payment rises. This is the length of the first part.",
+      "Mortgages often come in a two stage system, where for the first few years one has a lower, fixed rate and monthly payment. After that the rate rises and becomes variable and the monthly payment rises. This setting is the length of the first part.",
   },
   {
     id: "mortgageInterestRateStage1",
@@ -140,28 +143,31 @@ const inputConfigs: InputConfig[] = [
     increment: "",
     label: "Overpay when possible",
     tooltip:
-      "What to do if there's money left over at the end of the year? With this checked, it is primarily used to pay off the mortgage early. Otherwise it is invested in stocks.",
+      "What to do if there's money left over at the end of the year? With this checked, it is primarily used to pay off the mortgage early. Otherwise it is invested in stocks. Note that not all mortgages allow early repayment.",
   },
   {
     id: "inflation",
     inputType: "randomVariable",
     increment: 0.1,
     label: "Inflation (%), annual",
-    tooltip: null,
+    tooltip:
+      "Annual inflation. Assumed to be a normal distributed random variable with the given mean and standard deviation. The default values are the mean and standard deviation of UK annual CPI 1989-2023.",
   },
   {
     id: "stockAppreciationRate",
     inputType: "randomVariable",
     increment: 0.1,
     label: "Stocks value growth (%) over inflation, annual",
-    tooltip: null,
+    tooltip:
+      "Annual appreciation of the stock portfolio, on top of inflation. Assumed to be a normal distributed random variable with th given mean and standard deviation. The default values are for annual growth over inflation for the S&P 500 index 1989-2023.",
   },
   {
     id: "houseAppreciationRate",
     inputType: "randomVariable",
     increment: 0.1,
     label: "House price growth (%) over inflation, annual",
-    tooltip: null,
+    tooltip:
+      "Annual appreciation of the value of your house, on top of inflation. Assumed to be a normal distributed random variable with th given mean and standard deviation. The default values are for annual growth over inflation for the average London house price 1989-2023. Note that the standard deviation is likely a severe underestimate, given that it's the variation in the average home price. The price of a single home can vary much more, and you own a single home, not a market average.",
   },
   {
     id: "yearsToForecast",
@@ -183,7 +189,7 @@ const inputConfigs: InputConfig[] = [
     inputType: "checkbox",
     increment: "",
     label: "First time buyer",
-    tooltip: null,
+    tooltip: "Affects stamp duty.",
   },
   {
     id: "groundRent",
@@ -356,6 +362,7 @@ function createInputDiv(
       value as RandomVariableDistribution,
       step,
       label,
+      tooltip,
     );
   }
   const inputElement = createInputElement(
@@ -390,6 +397,7 @@ function createRandomVariableInputDiv(
   value: RandomVariableDistribution,
   step: string | number,
   label: string,
+  tooltip: string | null,
 ): [HTMLInputElement[], HTMLDivElement] {
   // Create the main container div
   const div = document.createElement("div");
@@ -397,6 +405,10 @@ function createRandomVariableInputDiv(
   div.classList.add("random-variable-input-div");
 
   const labelElement = createLabelElement(`${id}_${idSuffix}_mean`, label);
+  if (tooltip) {
+    const tooltipButton = createTooltipButton(tooltip);
+    labelElement.appendChild(tooltipButton);
+  }
   div.appendChild(labelElement);
 
   const meanInputElement = createInputElement(
@@ -574,7 +586,8 @@ export function createPropertyInputs(
   wrapperDiv.appendChild(summaryDiv);
   wrapperDiv.appendChild(inputsDiv);
 
-  document.body.appendChild(wrapperDiv);
+  const contentDiv = document.getElementById("content") as HTMLDivElement;
+  contentDiv.appendChild(wrapperDiv);
 
   return [propertyInputs, summaryValueSpans, canvas];
 }

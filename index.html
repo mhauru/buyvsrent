@@ -1,12 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Buy vs Rent</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-  <body>
-  </body>
-  <script src="./dist/main.js"></script>
+
+<body>
+  <header class="title-banner">
+    <h1>Buy vs Rent Calculator</h1>
+    <button id="info-button">What is this thing?</button>
+
+  </header>
+  <div id="content">
+    <!-- Dynamically added property-wrapper divs will go here -->
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>What is this thing?</h2>
+      <p>This is a calculator to help you compare the financial implications of buying
+      versus renting a home. You have two scenarios, where by default in the left one
+      you get a mortgage and buy a house, and in the right one you pay rent and invest
+      the available capital in stocks instead. The plots and the Final values section
+      show predictions for how these two scenarios might play out over time.</p>
+
+      <p>Below are many different parameters you can tune. Hover on the little question
+      marks to get more information about each one.</p>
+
+    <p>The calculator assumes UK taxation and uses UK concepts such as leaseholds and
+    ISAs. Some of the default values are based on London numbers, such as historical
+    house price growth in London.</p>
+
+    <p>The outcomes depend massively on future inflation, salary growth, house price
+    growth, rent growth, and the growth of the value of any stock portfolio. These are
+    all modelled probabilistically, and the value for each of these, as a percentage, is
+    assumed to be normal distributed. You can set the mean and the standard deviation.
+    The probabilistic nature of the simulation is why the plots at the top have error
+    bars. The midline is the median, the limits are the 20th and 80th percentiles.<p>
+
+    <p>Do remember that buying home is not only a financial decision, but affects your
+    life in many ways. This calculator only tries to capture the investment aspect.</p>
+
+    <p>This calculator is free software and its source code is here: <a
+        href="https://github.com/mhauru/buyvsrent">github.com/mhauru/buyvsrent</a></p>
+
+    <p>No one involved in making this calculator have any relevant qualifications, and
+    nothing here is financial advice.</p>
+    </div>
+  </div>
+
+</body>
+
+<script src="./dist/main.js"></script>
+
 </html>
