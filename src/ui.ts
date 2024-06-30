@@ -38,7 +38,7 @@ type InputConfig = {
   increment: number | string;
   label: string;
   tooltip: string | null;
-}
+};
 
 const inputConfigs: InputConfig[] = [
   {
@@ -199,7 +199,7 @@ const inputConfigs: InputConfig[] = [
     increment: 50,
     label: "Ground rent",
     tooltip:
-      "Note that you should probably set either a ground rent and no service charge, or the other way around, depending on whether you buy a leasehold or a freehold.",
+      "Note that the variables in this section depend on whether you have a freehold or a leasehold. The defaults are estimates for a leasehold. If you have a freehold, you should set the ground rent to zero, decrease or set to zero the service charge rate, and increase the maintenance rate and insurance costs.",
   },
   {
     id: "serviceChargeRate",
@@ -207,14 +207,15 @@ const inputConfigs: InputConfig[] = [
     increment: 0.1,
     label: "Service charge, % of value",
     tooltip:
-      "Note that you should probably set either ground rent and no service charge, or the other way around, depending on whether you buy a leasehold or a freehold.",
+      "Note that the variables in this section depend on whether you have a freehold or a leasehold. The defaults are estimates for a leasehold. If you have a freehold, you should set the ground rent to zero, decrease or set to zero the service charge rate, and increase the maintenance rate and insurance costs.",
   },
   {
     id: "maintenanceRate",
     inputType: "number",
     increment: 0.1,
     label: "Maintenance costs, % of value, annual",
-    tooltip: null,
+    tooltip:
+      "Note that the variables in this section depend on whether you have a freehold or a leasehold. The defaults are estimates for a leasehold. If you have a freehold, you should set the ground rent to zero, decrease or set to zero the service charge rate, and increase the maintenance rate and insurance costs.",
   },
   {
     id: "homeInsurance",
@@ -222,7 +223,7 @@ const inputConfigs: InputConfig[] = [
     increment: 50,
     label: "Home insurance",
     tooltip:
-      "This should be only for the building, not for contents. In other words, the part you have to pay because you own rather than rent.",
+      "This should be only for the building, not for contents. In other words, the part you have to pay because you own rather than rent. Usually only needed in a freehold.",
   },
   {
     id: "seed",
@@ -252,11 +253,11 @@ const inputConfigs: InputConfig[] = [
 
 type VisibilityCondition = "onlyIfBuying" | "onlyIfRenting" | "always";
 
-type GroupConfig  = {
+type GroupConfig = {
   inputs: (keyof Inputs)[];
   label: string;
   visibleWhen: VisibilityCondition;
-}
+};
 
 const groupConfigs: GroupConfig[] = [
   {

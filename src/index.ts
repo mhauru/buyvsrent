@@ -13,9 +13,9 @@ type InputsById = {
 const DEFAULT_INPUTS: Inputs = {
   isBuying: true,
   housePrice: 500_000,
-  cash: 315_000,
-  mortgage: 200_000,
-  salary: 3400,
+  cash: 110_000,
+  mortgage: 400_000,
+  salary: 3_800,
   salaryGrowth: { mean: 2, stdDev: 3 },
   // The average gross rental yield, i.e. annual rent divided by house price, is around
   // 4.5% in London.
@@ -24,10 +24,10 @@ const DEFAULT_INPUTS: Inputs = {
   // These are numbers I got from a Nationwide calculator for 500k house with 200k mortgage
   // on 2024-06-09, rounded a bit.
   mortgageStage1Length: 2,
-  mortgageInterestRateStage1: 6.14,
-  mortgageMonthlyPaymentStage1: 1450,
+  mortgageInterestRateStage1: 5.09,
+  mortgageMonthlyPaymentStage1: 2_170,
   mortgageInterestRateStage2: 7.99,
-  mortgageMonthlyPaymentStage2: 1650,
+  mortgageMonthlyPaymentStage2: 2_890,
   mortgageOverpay: false,
   // These are the mean and standard deviation of UK annual CPI 1989-2023.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23
@@ -43,7 +43,7 @@ const DEFAULT_INPUTS: Inputs = {
   // This is rent growth over house price growth. The mean is zero because we
   // assume that by default the two are coupled. The standard deviation is an unjustified guess.
   rentGrowth: { mean: 0, stdDev: 3 },
-  yearsToForecast: 20,
+  yearsToForecast: 30,
   // Buying costs rough estimate from here:
   // https://www.zoopla.co.uk/discover/buying/buying-costs/
   buyingCosts: 5000,
@@ -52,8 +52,8 @@ const DEFAULT_INPUTS: Inputs = {
   // Service charge estimate picked roughly from here:
   // https://www.sunnyavenue.co.uk/insight/what-is-a-reasonable-service-charge
   serviceChargeRate: 0.6,
-  maintenanceRate: 2,
-  homeInsurance: 300,
+  maintenanceRate: 1,
+  homeInsurance: 0,
   numSamples: 100,
   correctInflation: true,
   seed: 0.0,
