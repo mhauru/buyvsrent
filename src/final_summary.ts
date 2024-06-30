@@ -1,6 +1,6 @@
 import { Observable, combineLatest } from "rxjs";
 import * as fl from "./financial_logic";
-import { mean } from "mathjs";
+import { median } from "mathjs";
 import { SummaryValueSpans } from "./ui";
 
 function numberToStringPretty(value: number) {
@@ -17,26 +17,26 @@ export function createFinalSummary(
       const lastSummaries = summaries.map(
         (history) => history[history.length - 1],
       );
-      const postTaxWealth = mean(
+      const postTaxWealth = median(
         lastSummaries.map((s) => {
           return fl.postTaxWealth(s, correctInflation);
         }),
       );
       summaryValueSpans.houseValue.innerHTML = numberToStringPretty(
-        mean(lastSummaries.map((s) => fl.houseValue(s, correctInflation))),
+        median(lastSummaries.map((s) => fl.houseValue(s, correctInflation))),
       );
       summaryValueSpans.salary.innerHTML = numberToStringPretty(
-        mean(lastSummaries.map((s) => fl.salary(s, correctInflation))),
+        median(lastSummaries.map((s) => fl.salary(s, correctInflation))),
       );
       summaryValueSpans.wealth.innerHTML = numberToStringPretty(postTaxWealth);
       summaryValueSpans.rent.innerHTML = numberToStringPretty(
-        mean(lastSummaries.map((s) => fl.rent(s, correctInflation))),
+        median(lastSummaries.map((s) => fl.rent(s, correctInflation))),
       );
       summaryValueSpans.stockIsaValue.innerHTML = numberToStringPretty(
-        mean(lastSummaries.map((s) => fl.stockIsaValue(s, correctInflation))),
+        median(lastSummaries.map((s) => fl.stockIsaValue(s, correctInflation))),
       );
       summaryValueSpans.stockNonIsaValue.innerHTML = numberToStringPretty(
-        mean(
+        median(
           lastSummaries.map((s) => fl.stockNonIsaValue(s, correctInflation)),
         ),
       );

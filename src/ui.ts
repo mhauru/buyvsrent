@@ -524,7 +524,7 @@ function createSummaryDiv(): [HTMLDivElement, SummaryValueSpans] {
     stockNonIsaValue: addSummaryEntry(entriesContainer, "Stocks outside ISA:"),
     houseValue: addSummaryEntry(entriesContainer, "House value:"),
     rent: addSummaryEntry(entriesContainer, "Rent:"),
-    wealth: addSummaryEntry(entriesContainer, "Wealth:"),
+    wealth: addSummaryEntry(entriesContainer, "Post tax wealth:"),
   };
 
   div.appendChild(entriesContainer);
