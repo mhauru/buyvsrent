@@ -4,6 +4,7 @@ import { map, startWith } from "rxjs/operators";
 import { mean } from "mathjs";
 import * as fl from "./financial_logic";
 import { Inputs, RandomVariableDistribution, createInputElements } from "./ui";
+import { createFinalSummary } from "./final_summary";
 import { MinMaxObject, createPlot } from "./plots";
 
 type InputsById = {
@@ -272,40 +273,7 @@ function makeScenario(
     obs.correctInflation,
   );
 
-  function numberToStringPretty(value: number) {
-    return Math.round(value).toLocaleString();
-  }
-
-  combineLatest([summaries$, obs.correctInflation]).subscribe(
-    ([summaries, correctInflation]) => {
-      const lastSummaries = summaries.map(
-        (history) => history[history.length - 1],
-      );
-      const postTaxWealth = mean(
-        lastSummaries.map((s) => {
-          return fl.postTaxWealth(s, correctInflation);
-        }),
-      );
-      summaryValueSpans.houseValue.innerHTML = numberToStringPretty(
-        mean(lastSummaries.map((s) => fl.houseValue(s, correctInflation))),
-      );
-      summaryValueSpans.salary.innerHTML = numberToStringPretty(
-        mean(lastSummaries.map((s) => fl.salary(s, correctInflation))),
-      );
-      summaryValueSpans.wealth.innerHTML = numberToStringPretty(postTaxWealth);
-      summaryValueSpans.rent.innerHTML = numberToStringPretty(
-        mean(lastSummaries.map((s) => fl.rent(s, correctInflation))),
-      );
-      summaryValueSpans.stockIsaValue.innerHTML = numberToStringPretty(
-        mean(lastSummaries.map((s) => fl.stockIsaValue(s, correctInflation))),
-      );
-      summaryValueSpans.stockNonIsaValue.innerHTML = numberToStringPretty(
-        mean(
-          lastSummaries.map((s) => fl.stockNonIsaValue(s, correctInflation)),
-        ),
-      );
-    },
-  );
+  createFinalSummary(summaryValueSpans, summaries$, obs.correctInflation);
 
   let currentAllInputs: InputsById;
   allInputsSubject.subscribe({

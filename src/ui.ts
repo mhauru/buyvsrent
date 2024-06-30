@@ -498,7 +498,7 @@ function addSummaryEntry(
   return valueSpan;
 }
 
-type SummaryValueSpans = {
+export type SummaryValueSpans = {
   salary: HTMLSpanElement;
   houseValue: HTMLSpanElement;
   stockIsaValue: HTMLSpanElement;
