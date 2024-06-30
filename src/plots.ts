@@ -230,10 +230,18 @@ export function createPlot(
       },
       scales: {
         x: {
+          title: {
+            display: true,
+            text: "Years",
+          },
           type: "linear",
           position: "bottom",
         },
         y: {
+          title: {
+            display: true,
+            text: "", // Set dynamically below
+          },
           type: "linear",
           position: "left",
           max: 0,
@@ -266,6 +274,12 @@ export function createPlot(
   const chart = new Chart(context, config);
 
   let currentMinMax: MinMaxObject;
+
+  correctInflationObs.subscribe((correctInflation) => {
+    const title = correctInflation ? "Money, corrected for inflation" : "Money";
+    chart.options.scales.y.title.text = title;
+    chart.update();
+  });
 
   axisLimitsSubject.subscribe({
     next: (value: MinMaxObject) => {

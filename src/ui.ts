@@ -91,7 +91,8 @@ const inputConfigs: InputConfig[] = [
     inputType: "number",
     increment: 100,
     label: "Monthly rent",
-    tooltip: null,
+    tooltip:
+      "To make the comparison fair between renting and buying, you should make this be the rent you would need to pay for a similar home as the one you would pay. In London, for instance, 4.5% of house price as annual rent is a good starting point. It will grow over time the same way house prices grow.",
   },
   {
     id: "rentGrowth",
@@ -245,7 +246,7 @@ const inputConfigs: InputConfig[] = [
     increment: "",
     label: "Correct outputs for inflation",
     tooltip:
-      "Whether the results should be corrected for inflation. If ticked, e.g. your total wealth in 20 years time will be expressed in today's currency, with inflation having been subtracted.",
+      "Whether the results should be corrected for inflation. If ticked, e.g. your total wealth in 20 years time will be expressed in today's currency, with inflation subtracted.",
   },
 ];
 

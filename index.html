@@ -33,7 +33,8 @@
 
     <p>The calculator assumes UK taxation and uses UK concepts such as leaseholds and
     ISAs. Some of the default values are based on London numbers, such as historical
-    house price growth in London.</p>
+    house price growth in London. You can change those values though. Changing the
+    taxation system would require editing the code.</p>
 
     <p>The outcomes depend massively on future inflation, salary growth, house price
     growth, rent growth, and the growth of the value of any stock portfolio. These are
@@ -42,13 +43,41 @@
     The probabilistic nature of the simulation is why the plots at the top have error
     bars. The midline is the median, the limits are the 20th and 80th percentiles.<p>
 
-    <p>Do remember that buying home is not only a financial decision, but affects your
+    <p>Do remember that buying a home is not only a financial decision, but affects your
     life in many ways. This calculator only tries to capture the investment aspect.</p>
+
+    <p>Some caveats, things I'm not happy with in this calculator, that you should be
+    aware of:
+      <ul>
+          <li>The default standard deviation for house price growth is probably too low.
+              I've estimated it by looking at how much variation there is year-to-year in
+              the price of the average house in London. But that's very different from
+              how much variation there may be in the price of a single house. I'm not
+              sure how to best estimate the latter though.</li>
+          <li>The default values for rent growth and salary growth distributions are pure
+              guesses, I have no particular reason for them.</li>
+          <li>I have no idea if the assumption that the random variables are all normal
+              distributed is realistic.</li>
+          <li>The calculator doesn't really do variable mortgage rates. That's because it
+              doesn't model central bank interest rate development in any way. There's
+              probably some connection one could make there to inflation, but this would
+              get quite deep into macroeconomics. So currently you can just set the
+              mortgage rate you expect, and that's it.</li>
+          <li>Bankruptcies are handled a bit awkwardly. Currently if you ever come to a
+              situation where your yearly incomings can't cover the outgoings, all your
+              wealth, stock, salary, rent etc. are set to zero. This effectively
+              terminates the simulation. This may skew the distributions at the end of
+              the simulation in unexpected ways.</li>
+          <li>The time step of the simulation is a full year. Having monthly time steps
+              would be more accurate.</li>
+      </ul>
+    </p>
+    
 
     <p>This calculator is free software and its source code is here: <a
         href="https://github.com/mhauru/buyvsrent">github.com/mhauru/buyvsrent</a></p>
 
-    <p>No one involved in making this calculator have any relevant qualifications, and
+    <p>No one involved in making this calculator has any relevant qualifications, and
     nothing here is financial advice.</p>
     </div>
   </div>
