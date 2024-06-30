@@ -1,3 +1,4 @@
+// Setting the values in the Final summary section.
 import { Observable, combineLatest } from "rxjs";
 import * as fl from "./financial_logic";
 import { median } from "mathjs";

@@ -1,3 +1,4 @@
+// Creating the UI elements for inputs and outputs.
 import { RandomVariableDistribution } from "./random_variables";
 
 export type Inputs = {

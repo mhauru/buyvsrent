@@ -1,3 +1,4 @@
+// Module for making the summary plots at the top.
 import { Observable, combineLatest } from "rxjs";
 import { map } from "rxjs/operators";
 import { median, quantileSeq } from "mathjs";

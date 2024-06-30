@@ -1,3 +1,5 @@
+// All logic related to keeping track of one's financial situation and updating
+// it over time.
 import { RandomGenerator } from "./random_variables";
 
 const ISA_MAX_CONTRIBUTION = 20_000;

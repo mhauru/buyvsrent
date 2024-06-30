@@ -1,3 +1,4 @@
+// Generating random numbers and parametrising their distributions.
 import { randomLcg, randomNormal } from "d3-random";
 
 export type RandomGenerator = () => number;

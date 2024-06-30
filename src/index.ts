@@ -1,6 +1,7 @@
+// The main module.
 import { fromEvent, Observable, combineLatest, BehaviorSubject } from "rxjs";
 import { map, startWith } from "rxjs/operators";
-import { mean } from "mathjs";
+
 import * as fl from "./financial_logic";
 import { Inputs, createInputElements } from "./ui";
 import { createFinalSummary } from "./final_summary";
