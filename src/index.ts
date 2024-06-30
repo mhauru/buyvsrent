@@ -28,7 +28,7 @@ const DEFAULT_INPUTS: Inputs = {
   mortgageMonthlyPaymentStage1: 1450,
   mortgageInterestRateStage2: 7.99,
   mortgageMonthlyPaymentStage2: 1650,
-  mortgageOverpay: true,
+  mortgageOverpay: false,
   // These are the mean and standard deviation of UK annual CPI 1989-2023.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23
   inflation: { mean: 2.8, stdDev: 2.1 },
