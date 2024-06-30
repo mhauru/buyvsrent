@@ -25,18 +25,18 @@ export type MinMaxObject = {
   maxX: { [key: number]: number };
 };
 
-interface PlotPoint {
+type PlotPoint = {
   x: number;
   y: number;
 }
 
-interface Dataset {
+type Dataset = {
   label: string;
   data: Array<PlotPoint>;
   showLine: boolean;
 }
 
-interface Stats {
+type Stats = {
   median: Array<number>;
   p20: Array<number>;
   p80: Array<number>;

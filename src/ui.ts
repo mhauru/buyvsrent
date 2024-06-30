@@ -32,7 +32,7 @@ export type PropertyInputs = {
   [K in keyof Inputs]: HTMLInputElement[];
 };
 
-interface InputConfig {
+type InputConfig = {
   id: keyof Inputs;
   inputType: "checkbox" | "number" | "randomVariable";
   increment: number | string;
@@ -252,7 +252,7 @@ const inputConfigs: InputConfig[] = [
 
 type VisibilityCondition = "onlyIfBuying" | "onlyIfRenting" | "always";
 
-interface GroupConfig {
+type GroupConfig  = {
   inputs: (keyof Inputs)[];
   label: string;
   visibleWhen: VisibilityCondition;

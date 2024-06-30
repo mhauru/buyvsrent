@@ -5,7 +5,7 @@ const CAPITAL_GAINS_RATE = 20;
 
 export type RandomGenerator = () => number;
 
-export interface AnnualSummary {
+export type AnnualSummary = {
   houseValue: number;
   cashValue: number;
   salary: number;
@@ -17,7 +17,7 @@ export interface AnnualSummary {
   moneySpent: number;
   cumulativeInflation: number;
   yearNumber: number;
-}
+};
 
 function appreciateHouseValue(
   summary: AnnualSummary,
