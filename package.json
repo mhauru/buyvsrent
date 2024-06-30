@@ -5,6 +5,7 @@
     "keywords": [],
     "author": "Markus Hauru",
     "devDependencies": {
+        "@types/d3-random": "^3.0.3",
         "prettier": "^3.2.5",
         "ts-loader": "^9.5.1",
         "typescript": "^5.4.5",

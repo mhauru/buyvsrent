@@ -10,12 +10,15 @@ function numberToStringPretty(value: number) {
 
 export function createFinalSummary(
   summaryValueSpans: SummaryValueSpans,
-  summaries$: Observable<fl.FinancialSituation[][]>,
+  financial_situations$: Observable<fl.FinancialSituation[][]>,
   correctInflationObs: Observable<boolean>,
 ) {
-  combineLatest([summaries$, correctInflationObs]).subscribe(
-    ([summaries, correctInflation]) => {
-      const lastSummaries = summaries.map(
+  combineLatest([financial_situations$, correctInflationObs]).subscribe(
+    ([financial_situations, correctInflation]: [
+      fl.FinancialSituation[][],
+      boolean,
+    ]) => {
+      const lastSummaries = financial_situations.map(
         (history) => history[history.length - 1],
       );
       const postTaxWealth = median(

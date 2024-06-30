@@ -22,85 +22,85 @@ export type FinancialSituation = {
 };
 
 function appreciateHouseValue(
-  summary: FinancialSituation,
+  fs: FinancialSituation,
   houseAppreciationRate: number,
 ) {
-  summary.houseValue *= 1 + houseAppreciationRate / 100.0;
+  fs.houseValue *= 1 + houseAppreciationRate / 100.0;
 }
 
 function appreciateStockValue(
-  summary: FinancialSituation,
+  fs: FinancialSituation,
   stockAppreciationRate: number,
 ) {
-  summary.stockIsaValue *= 1 + stockAppreciationRate / 100.0;
-  summary.stockNonIsaValue *= 1 + stockAppreciationRate / 100.0;
+  fs.stockIsaValue *= 1 + stockAppreciationRate / 100.0;
+  fs.stockNonIsaValue *= 1 + stockAppreciationRate / 100.0;
 }
 
-function getSalary(summary: FinancialSituation) {
-  summary.cashValue += summary.salary * 12;
+function getSalary(fs: FinancialSituation) {
+  fs.cashValue += fs.salary * 12;
 }
 
-function getPayRaise(summary: FinancialSituation, salaryGrowth: number) {
-  summary.salary *= 1 + salaryGrowth / 100;
+function getPayRaise(fs: FinancialSituation, salaryGrowth: number) {
+  fs.salary *= 1 + salaryGrowth / 100;
 }
 
-function payRent(summary: FinancialSituation) {
-  const annualRent = summary.rent * 12;
-  summary.cashValue -= annualRent;
-  summary.moneySpent += annualRent;
+function payRent(fs: FinancialSituation) {
+  const annualRent = fs.rent * 12;
+  fs.cashValue -= annualRent;
+  fs.moneySpent += annualRent;
 }
 
-function raiseRent(summary: FinancialSituation, rentGrowth: number) {
-  summary.rent *= 1 + rentGrowth / 100;
+function raiseRent(fs: FinancialSituation, rentGrowth: number) {
+  fs.rent *= 1 + rentGrowth / 100;
 }
 
 function payMortgage(
-  summary: FinancialSituation,
+  fs: FinancialSituation,
   mortgageMonthlyPayment: number,
   mortgageInterestRate: number,
 ) {
-  const interest = (summary.mortgageBalance * mortgageInterestRate) / 100.0;
+  const interest = (fs.mortgageBalance * mortgageInterestRate) / 100.0;
   let mortgageAnnualPayment = mortgageMonthlyPayment * 12;
   let principalReduction = mortgageAnnualPayment - interest;
-  if (principalReduction > summary.mortgageBalance) {
-    principalReduction = summary.mortgageBalance;
+  if (principalReduction > fs.mortgageBalance) {
+    principalReduction = fs.mortgageBalance;
     mortgageAnnualPayment = principalReduction + interest;
   }
-  summary.mortgageBalance -= principalReduction;
-  summary.cashValue -= mortgageAnnualPayment;
-  summary.moneySpent += interest;
+  fs.mortgageBalance -= principalReduction;
+  fs.cashValue -= mortgageAnnualPayment;
+  fs.moneySpent += interest;
 }
 
 function payRunningHouseCosts(
-  summary: FinancialSituation,
+  fs: FinancialSituation,
   maintenanceRate: number,
   groundRent: number,
   serviceChargeRate: number,
   homeInsurance: number,
 ) {
-  const serviceCharge = (summary.houseValue * serviceChargeRate) / 100.0;
-  const maintenance = (summary.houseValue * maintenanceRate) / 100.0;
+  const serviceCharge = (fs.houseValue * serviceChargeRate) / 100.0;
+  const maintenance = (fs.houseValue * maintenanceRate) / 100.0;
   const totalOutgoings =
     maintenance + groundRent + serviceCharge + homeInsurance;
-  summary.cashValue -= totalOutgoings;
-  summary.moneySpent += totalOutgoings;
+  fs.cashValue -= totalOutgoings;
+  fs.moneySpent += totalOutgoings;
 }
 
-function overpayMortgage(summary: FinancialSituation) {
-  if (summary.cashValue < 0) return;
-  const overpayment = Math.min(summary.cashValue, summary.mortgageBalance);
-  summary.cashValue -= overpayment;
-  summary.mortgageBalance -= overpayment;
+function overpayMortgage(fs: FinancialSituation) {
+  if (fs.cashValue < 0) return;
+  const overpayment = Math.min(fs.cashValue, fs.mortgageBalance);
+  fs.cashValue -= overpayment;
+  fs.mortgageBalance -= overpayment;
 }
 
-function investSurplusCashInStocks(summary: FinancialSituation) {
-  if (summary.cashValue < 0) return;
-  const isaInvestment = Math.min(summary.cashValue, ISA_MAX_CONTRIBUTION);
-  const nonIsaInvestment = summary.cashValue - isaInvestment;
-  summary.cashValue -= isaInvestment + nonIsaInvestment;
-  summary.stockIsaValue += isaInvestment;
-  summary.stockNonIsaValue += nonIsaInvestment;
-  summary.stockNonIsaValuePaid += nonIsaInvestment;
+function investSurplusCashInStocks(fs: FinancialSituation) {
+  if (fs.cashValue < 0) return;
+  const isaInvestment = Math.min(fs.cashValue, ISA_MAX_CONTRIBUTION);
+  const nonIsaInvestment = fs.cashValue - isaInvestment;
+  fs.cashValue -= isaInvestment + nonIsaInvestment;
+  fs.stockIsaValue += isaInvestment;
+  fs.stockNonIsaValue += nonIsaInvestment;
+  fs.stockNonIsaValuePaid += nonIsaInvestment;
 }
 
 function computeStampDuty(housePrice: number, firstTimeBuyer: boolean): number {
@@ -114,15 +114,25 @@ function computeStampDuty(housePrice: number, firstTimeBuyer: boolean): number {
   const rates = [0.0, 0.05, 0.1, 0.12];
   let stampDuty = 0;
   for (let i = 0; i < rates.length; i++) {
-    if (housePrice <= thresholds[i]) break;
-    stampDuty +=
-      (Math.min(housePrice, thresholds[i + 1]) - thresholds[i]) * rates[i];
+    const threshold = thresholds[i];
+    const nextThreshold = thresholds[i + 1];
+    const rate = rates[i];
+    if (
+      threshold === undefined ||
+      nextThreshold === undefined ||
+      rate === undefined
+    )
+      throw new Error(
+        "Error indexing the thresholds and rates in computeStampDuty",
+      );
+    if (housePrice <= threshold) break;
+    stampDuty += (Math.min(housePrice, nextThreshold) - threshold) * rate;
   }
   return stampDuty;
 }
 
 function buyHouse(
-  summary: FinancialSituation,
+  fs: FinancialSituation,
   housePrice: number,
   mortgage: number,
   buyingCosts: number,
@@ -131,38 +141,38 @@ function buyHouse(
   const stampDuty = computeStampDuty(housePrice, firstTimeBuyer);
   const cashPurchasePart = housePrice - mortgage;
   const cashNeeded = stampDuty + buyingCosts + cashPurchasePart;
-  if (cashNeeded > summary.cashValue) {
-    goBankrupt(summary);
+  if (cashNeeded > fs.cashValue) {
+    goBankrupt(fs);
   } else {
-    summary.cashValue -= cashNeeded;
-    summary.mortgageBalance += mortgage;
-    summary.moneySpent += stampDuty + buyingCosts;
-    summary.houseValue += housePrice;
-    summary.rent = 0;
+    fs.cashValue -= cashNeeded;
+    fs.mortgageBalance += mortgage;
+    fs.moneySpent += stampDuty + buyingCosts;
+    fs.houseValue += housePrice;
+    fs.rent = 0;
   }
 }
 
-function goBankrupt(summary: FinancialSituation) {
-  summary.houseValue = 0;
-  summary.cashValue = 0;
-  summary.stockIsaValue = 0;
-  summary.stockNonIsaValue = 0;
-  summary.stockNonIsaValuePaid = 0;
-  summary.mortgageBalance = 0;
-  summary.moneySpent = 0;
-  summary.salary = 0;
-  summary.stockNonIsaValuePaid = 0;
-  summary.rent = 0;
+function goBankrupt(fs: FinancialSituation) {
+  fs.houseValue = 0;
+  fs.cashValue = 0;
+  fs.stockIsaValue = 0;
+  fs.stockNonIsaValue = 0;
+  fs.stockNonIsaValuePaid = 0;
+  fs.mortgageBalance = 0;
+  fs.moneySpent = 0;
+  fs.salary = 0;
+  fs.stockNonIsaValuePaid = 0;
+  fs.rent = 0;
 }
 
-function checkSummary(summary: FinancialSituation) {
-  if (summary.cashValue < 0) {
-    goBankrupt(summary);
+function checkFinancialSituation(fs: FinancialSituation) {
+  if (fs.cashValue < 0) {
+    goBankrupt(fs);
   }
 }
 
-export function getNextSummary(
-  summary: FinancialSituation,
+export function getNextFinancialSituation(
+  fs: FinancialSituation,
   inflationGen: RandomGenerator,
   salaryGrowthGen: RandomGenerator,
   rentGrowthGen: RandomGenerator,
@@ -177,7 +187,7 @@ export function getNextSummary(
   homeInsurance: number,
   maintenanceRate: number,
 ): FinancialSituation {
-  const nextSummary = { ...summary };
+  const nextFS = { ...fs };
   // Generate random values for this year
   const inflation = inflationGen();
   const salaryGrowth = inflation + salaryGrowthGen();
@@ -185,32 +195,32 @@ export function getNextSummary(
   const houseAppreciationRate = inflation + houseAppreciationRateGen();
   const rentGrowth = inflation + rentGrowthGen();
   // Expenses and income
-  getSalary(nextSummary);
-  payMortgage(nextSummary, mortgageMonthlyPayment, mortgageInterestRate);
+  getSalary(nextFS);
+  payMortgage(nextFS, mortgageMonthlyPayment, mortgageInterestRate);
   payRunningHouseCosts(
-    nextSummary,
+    nextFS,
     maintenanceRate,
     groundRent,
     serviceChargeRate,
     homeInsurance,
   );
-  if (!isBuying) payRent(nextSummary);
+  if (!isBuying) payRent(nextFS);
   // Changes
-  appreciateHouseValue(nextSummary, houseAppreciationRate);
-  appreciateStockValue(nextSummary, stockAppreciationRate);
-  getPayRaise(nextSummary, salaryGrowth);
-  raiseRent(nextSummary, rentGrowth);
+  appreciateHouseValue(nextFS, houseAppreciationRate);
+  appreciateStockValue(nextFS, stockAppreciationRate);
+  getPayRaise(nextFS, salaryGrowth);
+  raiseRent(nextFS, rentGrowth);
   // What to do with any money left over.
-  if (mortgageOverpay) overpayMortgage(nextSummary);
-  investSurplusCashInStocks(nextSummary);
+  if (mortgageOverpay) overpayMortgage(nextFS);
+  investSurplusCashInStocks(nextFS);
   // Clean-up
-  checkSummary(nextSummary);
-  nextSummary.cumulativeInflation *= 1 + inflation / 100;
-  nextSummary.yearNumber += 1;
-  return nextSummary;
+  checkFinancialSituation(nextFS);
+  nextFS.cumulativeInflation *= 1 + inflation / 100;
+  nextFS.yearNumber += 1;
+  return nextFS;
 }
 
-export function getInitialSummary(
+export function getInitialFinancialSituation(
   isBuying: boolean,
   housePrice: number,
   cash0: number,
@@ -220,7 +230,7 @@ export function getInitialSummary(
   buyingCosts: number,
   firstTimeBuyer: boolean,
 ) {
-  const summary = {
+  const fs = {
     houseValue: 0,
     cashValue: cash0,
     salary: salary,
@@ -234,14 +244,14 @@ export function getInitialSummary(
     moneySpent: 0,
   };
   if (isBuying)
-    buyHouse(summary, housePrice, mortgage0, buyingCosts, firstTimeBuyer);
-  investSurplusCashInStocks(summary);
-  checkSummary(summary);
-  return summary;
+    buyHouse(fs, housePrice, mortgage0, buyingCosts, firstTimeBuyer);
+  investSurplusCashInStocks(fs);
+  checkFinancialSituation(fs);
+  return fs;
 }
 
-function computeCapitalGainsTax(summary: FinancialSituation) {
-  const gain = summary.stockNonIsaValue - summary.stockNonIsaValuePaid;
+function computeCapitalGainsTax(fs: FinancialSituation) {
+  const gain = fs.stockNonIsaValue - fs.stockNonIsaValuePaid;
   return (
     (Math.max(gain - CAPITAL_GAINS_ALLOWANCE, 0) * CAPITAL_GAINS_RATE) / 100
   );
@@ -342,5 +352,3 @@ export function postTaxWealth(
   if (correctInflation) value /= s.cumulativeInflation;
   return value;
 }
-
-export function summaryOutputs(summary: FinancialSituation) {}

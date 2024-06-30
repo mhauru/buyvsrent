@@ -550,7 +550,7 @@ export function createInputElements(
     propertyInputDivs[config.id] = inputDiv;
   });
 
-  const groups = groupConfigs.map((groupConfig) => {
+  const groups: HTMLDivElement[] = groupConfigs.map((groupConfig) => {
     const divs = groupConfig.inputs.map(
       (inputId) => propertyInputDivs[inputId],
     );
@@ -560,7 +560,10 @@ export function createInputElements(
   // Make some groups only be visible based on whether we are buying or renting.
   function updateGroupVisibility(isBuying: boolean) {
     groups.forEach((group, index) => {
-      const visibleWhen = groupConfigs[index].visibleWhen;
+      const config = groupConfigs[index];
+      if (config === undefined)
+        throw new Error(`No config for group number ${index}`);
+      const visibleWhen = config.visibleWhen;
       const visible =
         visibleWhen === "always" ||
         (visibleWhen === "onlyIfBuying" && isBuying) ||
@@ -572,9 +575,12 @@ export function createInputElements(
     });
   }
 
-  updateGroupVisibility(propertyInputs.isBuying[0].checked);
+  const isBuyingElement = propertyInputs.isBuying[0];
+  if (isBuyingElement === undefined)
+    throw new Error("isBuying has no elements attached to it");
+  updateGroupVisibility(isBuyingElement.checked);
 
-  propertyInputs.isBuying[0].addEventListener("change", (event) => {
+  isBuyingElement.addEventListener("change", (event: Event) => {
     updateGroupVisibility((event.target as HTMLInputElement).checked);
   });
 

@@ -3,11 +3,10 @@ import { fromEvent, Observable, combineLatest, BehaviorSubject } from "rxjs";
 import { map, startWith } from "rxjs/operators";
 
 import * as fl from "./financial_logic";
-import { Inputs, createInputElements } from "./ui";
+import { Inputs, InputElements, createInputElements } from "./ui";
 import { createFinalSummary } from "./final_summary";
 import { MinMaxObject, createPlot } from "./plots";
 import {
-  RandomGenerator,
   RandomVariableDistribution,
   makeGenerator,
   makeRootGenerator,
@@ -89,7 +88,7 @@ type InputObservables = {
 
 function makeNumberObservable(input: HTMLInputElement): Observable<number> {
   const observable: Observable<number> = fromEvent(input, "input").pipe(
-    map((event) => parseFloat((event.target as HTMLInputElement).value)),
+    map((event: Event) => parseFloat((event.target as HTMLInputElement).value)),
     startWith(parseFloat(input.value)),
   );
   return observable;
@@ -97,16 +96,16 @@ function makeNumberObservable(input: HTMLInputElement): Observable<number> {
 
 function makeBooleanObservable(input: HTMLInputElement): Observable<boolean> {
   const observable: Observable<boolean> = fromEvent(input, "input").pipe(
-    map((event) => (event.target as HTMLInputElement).checked),
+    map((event: Event) => (event.target as HTMLInputElement).checked),
     startWith(input.checked),
   );
   return observable;
 }
 
-function makeDistributionObservable([
-  inputMean,
-  inputStdDev,
-]: HTMLInputElement[]): Observable<RandomVariableDistribution> {
+function makeDistributionObservable([inputMean, inputStdDev]: [
+  HTMLInputElement,
+  HTMLInputElement,
+]): Observable<RandomVariableDistribution> {
   const meanObservable = makeNumberObservable(inputMean);
   const stdDevObservable = makeNumberObservable(inputStdDev);
   const observable: Observable<RandomVariableDistribution> = combineLatest([
@@ -135,11 +134,15 @@ function makeScenario(
   // Create observables from the input elements
   const obs: InputObservables = {} as InputObservables;
   for (const inputName in propertyInputs) {
-    const inputElements = propertyInputs[inputName];
-    if (inputElements.length > 1) {
-      obs[inputName] = makeDistributionObservable(inputElements);
+    const inputElements = propertyInputs[inputName as keyof InputElements];
+    if (inputElements.length == 2) {
+      obs[inputName] = makeDistributionObservable(
+        inputElements as [HTMLInputElement, HTMLInputElement],
+      );
     } else {
       const inputElement = inputElements[0];
+      if (inputElement === undefined)
+        throw new Error("No input element attached to input.");
       if (inputElement.type === "checkbox") {
         obs[inputName] = makeBooleanObservable(inputElement);
       } else {
@@ -148,7 +151,7 @@ function makeScenario(
     }
   }
 
-  const summary0$: Observable<fl.FinancialSituation> = combineLatest([
+  const fs0$: Observable<fl.FinancialSituation> = combineLatest([
     obs.isBuying,
     obs.housePrice,
     obs.cash,
@@ -157,11 +160,11 @@ function makeScenario(
     obs.mortgage,
     obs.buyingCosts,
     obs.firstTimeBuyer,
-  ]).pipe(map((args) => fl.getInitialSummary(...args)));
+  ]).pipe(map((args) => fl.getInitialFinancialSituation(...args)));
 
-  const summaries$: Observable<Array<Array<fl.FinancialSituation>>> =
+  const financial_situations$: Observable<Array<Array<fl.FinancialSituation>>> =
     combineLatest([
-      summary0$,
+      fs0$,
       obs.salaryGrowth,
       obs.rentGrowth,
       obs.isBuying,
@@ -184,7 +187,7 @@ function makeScenario(
     ]).pipe(
       map(
         ([
-          summary0,
+          fs0,
           salaryGrowthDist,
           rentGrowthDist,
           isBuying,
@@ -223,8 +226,8 @@ function makeScenario(
               rootGenerator,
               houseAppreciationRateDist,
             );
-            let history = [summary0];
-            let lastSummary = summary0;
+            let history = [fs0];
+            let lastFS = fs0;
 
             for (let i = 1; i <= yearsToForecast; i++) {
               let mortgageMonthlyPayment: number;
@@ -236,8 +239,8 @@ function makeScenario(
                 mortgageMonthlyPayment = mortgageMonthlyPaymentStage2;
                 mortgageInterestRate = mortgageInterestRateStage2;
               }
-              const nextSummary = fl.getNextSummary(
-                lastSummary,
+              const nextFS = fl.getNextFinancialSituation(
+                lastFS,
                 inflationGen,
                 salaryGrowthGen,
                 rentGrowthGen,
@@ -252,8 +255,8 @@ function makeScenario(
                 homeInsurance,
                 maintenanceRate,
               );
-              history.push(nextSummary);
-              lastSummary = nextSummary;
+              history.push(nextFS);
+              lastFS = nextFS;
             }
             samples.push(history);
           }
@@ -265,12 +268,16 @@ function makeScenario(
   createPlot(
     idNumber,
     canvas,
-    summaries$,
+    financial_situations$,
     axisLimitsSubject,
     obs.correctInflation,
   );
 
-  createFinalSummary(summaryValueSpans, summaries$, obs.correctInflation);
+  createFinalSummary(
+    summaryValueSpans,
+    financial_situations$,
+    obs.correctInflation,
+  );
 
   // Add the inputs of this scenario to the allInputsSubject, that is used to update the URL.
   let currentAllInputs: InputsById;

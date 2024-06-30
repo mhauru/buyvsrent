@@ -45,11 +45,11 @@ type Stats = {
 
 // Apply f to each FinancialSituation, and return a list of medians and percentiles of their values.
 function statsOverSamples(
-  summaries: Array<Array<fl.FinancialSituation>>,
+  financial_situations: Array<Array<fl.FinancialSituation>>,
   f: (arg1: fl.FinancialSituation) => number,
 ): Stats {
-  const transposed = summaries[0].map((_, colIndex) =>
-    summaries.map((row) => row[colIndex]),
+  const transposed = financial_situations[0].map((_, colIndex) =>
+    financial_situations.map((row) => row[colIndex]),
   );
   const medianValues = transposed.map((innerArray) =>
     median(innerArray.map(f)),
@@ -110,33 +110,33 @@ function getColorForLabel(label: string): Color {
 export function createPlot(
   idNumber,
   canvas,
-  summaries$: Observable<Array<Array<fl.FinancialSituation>>>,
+  financial_situations$: Observable<Array<Array<fl.FinancialSituation>>>,
   axisLimitsSubject,
   correctInflationObs: Observable<boolean>,
 ) {
   const datasets$: Observable<Array<Dataset>> = combineLatest([
-    summaries$,
+    financial_situations$,
     correctInflationObs,
   ]).pipe(
-    map(([summaries, correctInflation]) => {
-      let postTaxWealths = statsOverSamples(summaries, (s) =>
+    map(([financial_situations, correctInflation]) => {
+      let postTaxWealths = statsOverSamples(financial_situations, (s) =>
         fl.postTaxWealth(s, correctInflation),
       );
       let mortgageBalances = statsOverSamples(
-        summaries,
+        financial_situations,
         (s) => -fl.mortgageBalance(s, correctInflation),
       );
-      let cashValues = statsOverSamples(summaries, (s) =>
+      let cashValues = statsOverSamples(financial_situations, (s) =>
         fl.cashValue(s, correctInflation),
       );
-      let postTaxStocksValues = statsOverSamples(summaries, (s) =>
+      let postTaxStocksValues = statsOverSamples(financial_situations, (s) =>
         fl.postTaxStocksValue(s, correctInflation),
       );
-      let houseValues = statsOverSamples(summaries, (s) =>
+      let houseValues = statsOverSamples(financial_situations, (s) =>
         fl.houseValue(s, correctInflation),
       );
       let moneySpent = statsOverSamples(
-        summaries,
+        financial_situations,
         (s) => -fl.moneySpent(s, correctInflation),
       );
 
@@ -278,7 +278,7 @@ export function createPlot(
 
   correctInflationObs.subscribe((correctInflation) => {
     const title = correctInflation ? "Money, corrected for inflation" : "Money";
-    chart.options.scales.y.title.text = title;
+    chart.options.scales["y"].title.text = title;
     chart.update();
   });
 
@@ -294,15 +294,15 @@ export function createPlot(
         Math.floor((minY * minYMarginFactor) / roundingUnitY) * roundingUnitY;
       const plotMaxY =
         Math.ceil((maxY * maxYMarginFactor) / roundingUnitY) * roundingUnitY;
-      chart.options.scales.y.min = plotMinY;
-      chart.options.scales.y.max = plotMaxY;
+      chart.options.scales["y"].min = plotMinY;
+      chart.options.scales["y"].max = plotMaxY;
 
       const minX = Math.min(...Object.values(value.minX));
       const maxX = Math.max(...Object.values(value.maxX));
       const plotMinX = minX;
       const plotMaxX = maxX;
-      chart.options.scales.x.min = plotMinX;
-      chart.options.scales.x.max = plotMaxX;
+      chart.options.scales["x"].min = plotMinX;
+      chart.options.scales["x"].max = plotMaxX;
       chart.update();
     },
   });
