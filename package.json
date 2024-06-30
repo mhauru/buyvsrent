@@ -1,22 +1,27 @@
 {
-    "name": "buyvsrent",
-    "version": "0.1.0",
-    "private": true,
-    "keywords": [],
-    "author": "Markus Hauru",
-    "devDependencies": {
-        "@types/d3-random": "^3.0.3",
-        "prettier": "^3.2.5",
-        "ts-loader": "^9.5.1",
-        "typescript": "^5.4.5",
-        "webpack": "^5.91.0",
-        "webpack-cli": "^5.1.4"
-    },
-    "dependencies": {
-        "chart.js": "^4.4.3",
-        "d3-color": "^3.1.0",
-        "d3-random": "^3.0.1",
-        "mathjs": "^13.0.0",
-        "rxjs": "^7.8.1"
-    }
+  "name": "buyvsrent",
+  "version": "0.1.0",
+  "private": true,
+  "keywords": [],
+  "author": "Markus Hauru",
+  "devDependencies": {
+    "@types/d3-random": "^3.0.3",
+    "prettier": "^3.2.5",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.4.5",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.3",
+    "d3-color": "^3.1.0",
+    "d3-random": "^3.0.1",
+    "mathjs": "^13.0.0",
+    "rxjs": "^7.8.1"
+  },
+  "scripts": {
+    "build:webpack": "webpack --mode production",
+    "copy-files": "cp src/*.html dist; cp src/styles/*.css dist",
+    "build": "npm run build:webpack && npm run copy-files"
+  }
 }
