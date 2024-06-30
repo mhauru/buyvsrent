@@ -28,7 +28,7 @@ export type Inputs = {
   correctInflation: boolean;
 };
 
-export type PropertyInputs = {
+export type InputElements = {
   [K in keyof Inputs]: HTMLInputElement[];
 };
 
@@ -530,11 +530,11 @@ function createSummaryDiv(): [HTMLDivElement, SummaryValueSpans] {
   return [div, valueSpans];
 }
 
-export function createPropertyInputs(
+export function createInputElements(
   idSuffix: number,
   inputs: Inputs,
-): [PropertyInputs, SummaryValueSpans, HTMLCanvasElement] {
-  const propertyInputs: PropertyInputs = {} as any;
+): [InputElements, SummaryValueSpans, HTMLCanvasElement] {
+  const propertyInputs: InputElements = {} as any;
   const propertyInputDivs: { [key in keyof Inputs]: HTMLDivElement } =
     {} as any;
 

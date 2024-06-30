@@ -5,7 +5,7 @@ const CAPITAL_GAINS_RATE = 20;
 
 export type RandomGenerator = () => number;
 
-export type AnnualSummary = {
+export type FinancialSituation = {
   houseValue: number;
   cashValue: number;
   salary: number;
@@ -20,40 +20,40 @@ export type AnnualSummary = {
 };
 
 function appreciateHouseValue(
-  summary: AnnualSummary,
+  summary: FinancialSituation,
   houseAppreciationRate: number,
 ) {
   summary.houseValue *= 1 + houseAppreciationRate / 100.0;
 }
 
 function appreciateStockValue(
-  summary: AnnualSummary,
+  summary: FinancialSituation,
   stockAppreciationRate: number,
 ) {
   summary.stockIsaValue *= 1 + stockAppreciationRate / 100.0;
   summary.stockNonIsaValue *= 1 + stockAppreciationRate / 100.0;
 }
 
-function getSalary(summary: AnnualSummary) {
+function getSalary(summary: FinancialSituation) {
   summary.cashValue += summary.salary * 12;
 }
 
-function getPayRaise(summary: AnnualSummary, salaryGrowth: number) {
+function getPayRaise(summary: FinancialSituation, salaryGrowth: number) {
   summary.salary *= 1 + salaryGrowth / 100;
 }
 
-function payRent(summary: AnnualSummary) {
+function payRent(summary: FinancialSituation) {
   const annualRent = summary.rent * 12;
   summary.cashValue -= annualRent;
   summary.moneySpent += annualRent;
 }
 
-function raiseRent(summary: AnnualSummary, rentGrowth: number) {
+function raiseRent(summary: FinancialSituation, rentGrowth: number) {
   summary.rent *= 1 + rentGrowth / 100;
 }
 
 function payMortgage(
-  summary: AnnualSummary,
+  summary: FinancialSituation,
   mortgageMonthlyPayment: number,
   mortgageInterestRate: number,
 ) {
@@ -70,7 +70,7 @@ function payMortgage(
 }
 
 function payRunningHouseCosts(
-  summary: AnnualSummary,
+  summary: FinancialSituation,
   maintenanceRate: number,
   groundRent: number,
   serviceChargeRate: number,
@@ -84,14 +84,14 @@ function payRunningHouseCosts(
   summary.moneySpent += totalOutgoings;
 }
 
-function overpayMortgage(summary: AnnualSummary) {
+function overpayMortgage(summary: FinancialSituation) {
   if (summary.cashValue < 0) return;
   const overpayment = Math.min(summary.cashValue, summary.mortgageBalance);
   summary.cashValue -= overpayment;
   summary.mortgageBalance -= overpayment;
 }
 
-function investSurplusCashInStocks(summary: AnnualSummary) {
+function investSurplusCashInStocks(summary: FinancialSituation) {
   if (summary.cashValue < 0) return;
   const isaInvestment = Math.min(summary.cashValue, ISA_MAX_CONTRIBUTION);
   const nonIsaInvestment = summary.cashValue - isaInvestment;
@@ -120,7 +120,7 @@ function computeStampDuty(housePrice: number, firstTimeBuyer: boolean): number {
 }
 
 function buyHouse(
-  summary: AnnualSummary,
+  summary: FinancialSituation,
   housePrice: number,
   mortgage: number,
   buyingCosts: number,
@@ -140,7 +140,7 @@ function buyHouse(
   }
 }
 
-function goBankrupt(summary: AnnualSummary) {
+function goBankrupt(summary: FinancialSituation) {
   summary.houseValue = 0;
   summary.cashValue = 0;
   summary.stockIsaValue = 0;
@@ -153,14 +153,14 @@ function goBankrupt(summary: AnnualSummary) {
   summary.rent = 0;
 }
 
-function checkSummary(summary: AnnualSummary) {
+function checkSummary(summary: FinancialSituation) {
   if (summary.cashValue < 0) {
     goBankrupt(summary);
   }
 }
 
 export function getNextSummary(
-  summary: AnnualSummary,
+  summary: FinancialSituation,
   inflationGen: RandomGenerator,
   salaryGrowthGen: RandomGenerator,
   rentGrowthGen: RandomGenerator,
@@ -174,7 +174,7 @@ export function getNextSummary(
   serviceChargeRate: number,
   homeInsurance: number,
   maintenanceRate: number,
-): AnnualSummary {
+): FinancialSituation {
   const nextSummary = { ...summary };
   // Generate random values for this year
   const inflation = inflationGen();
@@ -238,7 +238,7 @@ export function getInitialSummary(
   return summary;
 }
 
-function computeCapitalGainsTax(summary: AnnualSummary) {
+function computeCapitalGainsTax(summary: FinancialSituation) {
   const gain = summary.stockNonIsaValue - summary.stockNonIsaValuePaid;
   return (
     (Math.max(gain - CAPITAL_GAINS_ALLOWANCE, 0) * CAPITAL_GAINS_RATE) / 100
@@ -246,7 +246,7 @@ function computeCapitalGainsTax(summary: AnnualSummary) {
 }
 
 export function mortgageBalance(
-  s: AnnualSummary,
+  s: FinancialSituation,
   correctInflation: boolean = false,
 ): number {
   let value = s.mortgageBalance;
@@ -255,7 +255,7 @@ export function mortgageBalance(
 }
 
 export function moneySpent(
-  s: AnnualSummary,
+  s: FinancialSituation,
   correctInflation: boolean = false,
 ): number {
   let value = s.moneySpent;
@@ -264,7 +264,7 @@ export function moneySpent(
 }
 
 export function salary(
-  s: AnnualSummary,
+  s: FinancialSituation,
   correctInflation: boolean = false,
 ): number {
   let value = s.salary;
@@ -273,7 +273,7 @@ export function salary(
 }
 
 export function rent(
-  s: AnnualSummary,
+  s: FinancialSituation,
   correctInflation: boolean = false,
 ): number {
   let value = s.rent;
@@ -282,7 +282,7 @@ export function rent(
 }
 
 export function cashValue(
-  s: AnnualSummary,
+  s: FinancialSituation,
   correctInflation: boolean = false,
 ): number {
   let value = s.cashValue;
@@ -291,7 +291,7 @@ export function cashValue(
 }
 
 export function houseValue(
-  s: AnnualSummary,
+  s: FinancialSituation,
   correctInflation: boolean = false,
 ): number {
   let value = s.houseValue;
@@ -300,7 +300,7 @@ export function houseValue(
 }
 
 export function stockIsaValue(
-  s: AnnualSummary,
+  s: FinancialSituation,
   correctInflation: boolean = false,
 ): number {
   let value = s.stockIsaValue;
@@ -309,7 +309,7 @@ export function stockIsaValue(
 }
 
 export function stockNonIsaValue(
-  s: AnnualSummary,
+  s: FinancialSituation,
   correctInflation: boolean = false,
 ): number {
   let value = s.stockNonIsaValue;
@@ -318,7 +318,7 @@ export function stockNonIsaValue(
 }
 
 export function postTaxStocksValue(
-  s: AnnualSummary,
+  s: FinancialSituation,
   correctInflation: boolean = false,
 ): number {
   let value = s.stockIsaValue + s.stockNonIsaValue - computeCapitalGainsTax(s);
@@ -327,7 +327,7 @@ export function postTaxStocksValue(
 }
 
 export function postTaxWealth(
-  s: AnnualSummary,
+  s: FinancialSituation,
   correctInflation: boolean = false,
 ): number {
   let value =
@@ -341,4 +341,4 @@ export function postTaxWealth(
   return value;
 }
 
-export function summaryOutputs(summary: AnnualSummary) {}
+export function summaryOutputs(summary: FinancialSituation) {}

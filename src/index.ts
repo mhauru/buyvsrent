@@ -3,7 +3,7 @@ import { randomNormal, randomLcg } from "d3-random";
 import { map, startWith } from "rxjs/operators";
 import { mean } from "mathjs";
 import * as fl from "./financial_logic";
-import { Inputs, RandomVariableDistribution, createPropertyInputs } from "./ui";
+import { Inputs, RandomVariableDistribution, createInputElements } from "./ui";
 import { MinMaxObject, createPlot } from "./plots";
 
 type InputsById = {
@@ -129,7 +129,7 @@ function makeScenario(
   allInputsSubject: BehaviorSubject<InputsById>,
   inputs: Inputs,
 ) {
-  const [propertyInputs, summaryValueSpans, canvas] = createPropertyInputs(
+  const [propertyInputs, summaryValueSpans, canvas] = createInputElements(
     idNumber,
     inputs,
   );
@@ -150,7 +150,7 @@ function makeScenario(
     }
   }
 
-  const summary0$: Observable<fl.AnnualSummary> = combineLatest([
+  const summary0$: Observable<fl.FinancialSituation> = combineLatest([
     obs.isBuying,
     obs.housePrice,
     obs.cash,
@@ -161,107 +161,108 @@ function makeScenario(
     obs.firstTimeBuyer,
   ]).pipe(map((args) => fl.getInitialSummary(...args)));
 
-  const summaries$: Observable<Array<Array<fl.AnnualSummary>>> = combineLatest([
-    summary0$,
-    obs.salaryGrowth,
-    obs.rentGrowth,
-    obs.isBuying,
-    obs.inflation,
-    obs.stockAppreciationRate,
-    obs.houseAppreciationRate,
-    obs.mortgageStage1Length,
-    obs.mortgageInterestRateStage1,
-    obs.mortgageMonthlyPaymentStage1,
-    obs.mortgageInterestRateStage2,
-    obs.mortgageMonthlyPaymentStage2,
-    obs.mortgageOverpay,
-    obs.yearsToForecast,
-    obs.groundRent,
-    obs.serviceChargeRate,
-    obs.homeInsurance,
-    obs.maintenanceRate,
-    obs.numSamples,
-    obs.seed,
-  ]).pipe(
-    map(
-      ([
-        summary0,
-        salaryGrowthDist,
-        rentGrowthDist,
-        isBuying,
-        inflationDist,
-        stockAppreciationRateDist,
-        houseAppreciationRateDist,
-        mortgageStage1Length,
-        mortgageInterestRateStage1,
-        mortgageMonthlyPaymentStage1,
-        mortgageInterestRateStage2,
-        mortgageMonthlyPaymentStage2,
-        mortgageOverpay,
-        yearsToForecast,
-        groundRent,
-        serviceChargeRate,
-        homeInsurance,
-        maintenanceRate,
-        numSamples,
-        seed,
-      ]) => {
-        const samples: Array<Array<fl.AnnualSummary>> = [];
+  const summaries$: Observable<Array<Array<fl.FinancialSituation>>> =
+    combineLatest([
+      summary0$,
+      obs.salaryGrowth,
+      obs.rentGrowth,
+      obs.isBuying,
+      obs.inflation,
+      obs.stockAppreciationRate,
+      obs.houseAppreciationRate,
+      obs.mortgageStage1Length,
+      obs.mortgageInterestRateStage1,
+      obs.mortgageMonthlyPaymentStage1,
+      obs.mortgageInterestRateStage2,
+      obs.mortgageMonthlyPaymentStage2,
+      obs.mortgageOverpay,
+      obs.yearsToForecast,
+      obs.groundRent,
+      obs.serviceChargeRate,
+      obs.homeInsurance,
+      obs.maintenanceRate,
+      obs.numSamples,
+      obs.seed,
+    ]).pipe(
+      map(
+        ([
+          summary0,
+          salaryGrowthDist,
+          rentGrowthDist,
+          isBuying,
+          inflationDist,
+          stockAppreciationRateDist,
+          houseAppreciationRateDist,
+          mortgageStage1Length,
+          mortgageInterestRateStage1,
+          mortgageMonthlyPaymentStage1,
+          mortgageInterestRateStage2,
+          mortgageMonthlyPaymentStage2,
+          mortgageOverpay,
+          yearsToForecast,
+          groundRent,
+          serviceChargeRate,
+          homeInsurance,
+          maintenanceRate,
+          numSamples,
+          seed,
+        ]) => {
+          const samples: Array<Array<fl.FinancialSituation>> = [];
 
-        const rootGenerator = randomLcg(seed);
-        for (let i = 0; i < numSamples; i++) {
-          const inflationGen = makeGenerator(rootGenerator, inflationDist);
-          const stockAppreciationRateGen = makeGenerator(
-            rootGenerator,
-            stockAppreciationRateDist,
-          );
-          const salaryGrowthGen = makeGenerator(
-            rootGenerator,
-            salaryGrowthDist,
-          );
-          const rentGrowthGen = makeGenerator(rootGenerator, rentGrowthDist);
-          const houseAppreciationRateGen = makeGenerator(
-            rootGenerator,
-            houseAppreciationRateDist,
-          );
-          let history = [summary0];
-          let lastSummary = summary0;
-
-          for (let i = 1; i <= yearsToForecast; i++) {
-            let mortgageMonthlyPayment: number;
-            let mortgageInterestRate: number;
-            if (i <= mortgageStage1Length) {
-              mortgageMonthlyPayment = mortgageMonthlyPaymentStage1;
-              mortgageInterestRate = mortgageInterestRateStage1;
-            } else {
-              mortgageMonthlyPayment = mortgageMonthlyPaymentStage2;
-              mortgageInterestRate = mortgageInterestRateStage2;
-            }
-            const nextSummary = fl.getNextSummary(
-              lastSummary,
-              inflationGen,
-              salaryGrowthGen,
-              rentGrowthGen,
-              isBuying,
-              stockAppreciationRateGen,
-              houseAppreciationRateGen,
-              mortgageInterestRate,
-              mortgageMonthlyPayment,
-              mortgageOverpay,
-              groundRent,
-              serviceChargeRate,
-              homeInsurance,
-              maintenanceRate,
+          const rootGenerator = randomLcg(seed);
+          for (let i = 0; i < numSamples; i++) {
+            const inflationGen = makeGenerator(rootGenerator, inflationDist);
+            const stockAppreciationRateGen = makeGenerator(
+              rootGenerator,
+              stockAppreciationRateDist,
             );
-            history.push(nextSummary);
-            lastSummary = nextSummary;
+            const salaryGrowthGen = makeGenerator(
+              rootGenerator,
+              salaryGrowthDist,
+            );
+            const rentGrowthGen = makeGenerator(rootGenerator, rentGrowthDist);
+            const houseAppreciationRateGen = makeGenerator(
+              rootGenerator,
+              houseAppreciationRateDist,
+            );
+            let history = [summary0];
+            let lastSummary = summary0;
+
+            for (let i = 1; i <= yearsToForecast; i++) {
+              let mortgageMonthlyPayment: number;
+              let mortgageInterestRate: number;
+              if (i <= mortgageStage1Length) {
+                mortgageMonthlyPayment = mortgageMonthlyPaymentStage1;
+                mortgageInterestRate = mortgageInterestRateStage1;
+              } else {
+                mortgageMonthlyPayment = mortgageMonthlyPaymentStage2;
+                mortgageInterestRate = mortgageInterestRateStage2;
+              }
+              const nextSummary = fl.getNextSummary(
+                lastSummary,
+                inflationGen,
+                salaryGrowthGen,
+                rentGrowthGen,
+                isBuying,
+                stockAppreciationRateGen,
+                houseAppreciationRateGen,
+                mortgageInterestRate,
+                mortgageMonthlyPayment,
+                mortgageOverpay,
+                groundRent,
+                serviceChargeRate,
+                homeInsurance,
+                maintenanceRate,
+              );
+              history.push(nextSummary);
+              lastSummary = nextSummary;
+            }
+            samples.push(history);
           }
-          samples.push(history);
-        }
-        return samples;
-      },
-    ),
-  );
+          return samples;
+        },
+      ),
+    );
 
   createPlot(
     idNumber,

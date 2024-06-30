@@ -28,24 +28,24 @@ export type MinMaxObject = {
 type PlotPoint = {
   x: number;
   y: number;
-}
+};
 
 type Dataset = {
   label: string;
   data: Array<PlotPoint>;
   showLine: boolean;
-}
+};
 
 type Stats = {
   median: Array<number>;
   p20: Array<number>;
   p80: Array<number>;
-}
+};
 
-// Apply f to each AnnualSummary, and return a list of medians and percentiles of their values.
+// Apply f to each FinancialSituation, and return a list of medians and percentiles of their values.
 function statsOverSamples(
-  summaries: Array<Array<fl.AnnualSummary>>,
-  f: (arg1: fl.AnnualSummary) => number,
+  summaries: Array<Array<fl.FinancialSituation>>,
+  f: (arg1: fl.FinancialSituation) => number,
 ): Stats {
   const transposed = summaries[0].map((_, colIndex) =>
     summaries.map((row) => row[colIndex]),
@@ -109,7 +109,7 @@ function getColorForLabel(label: string): Color {
 export function createPlot(
   idNumber,
   canvas,
-  summaries$: Observable<Array<Array<fl.AnnualSummary>>>,
+  summaries$: Observable<Array<Array<fl.FinancialSituation>>>,
   axisLimitsSubject,
   correctInflationObs: Observable<boolean>,
 ) {
