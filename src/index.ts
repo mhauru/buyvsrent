@@ -1,15 +1,16 @@
 import { fromEvent, Observable, combineLatest, BehaviorSubject } from "rxjs";
-import { randomNormal, randomLcg } from "d3-random";
 import { map, startWith } from "rxjs/operators";
 import { mean } from "mathjs";
 import * as fl from "./financial_logic";
-import { Inputs, RandomVariableDistribution, createInputElements } from "./ui";
+import { Inputs, createInputElements } from "./ui";
 import { createFinalSummary } from "./final_summary";
 import { MinMaxObject, createPlot } from "./plots";
-
-type InputsById = {
-  [key: number]: Inputs;
-};
+import {
+  RandomGenerator,
+  RandomVariableDistribution,
+  makeGenerator,
+  makeRootGenerator,
+} from "./random_variables";
 
 const DEFAULT_INPUTS: Inputs = {
   isBuying: true,
@@ -71,6 +72,20 @@ const DEFAULT_INPUTS_BY_ID = {
   },
 };
 
+type InputsById = {
+  [key: number]: Inputs;
+};
+
+type InputObservables = {
+  [K in keyof Inputs]: Inputs[K] extends number
+    ? Observable<number>
+    : Inputs[K] extends boolean
+      ? Observable<boolean>
+      : Inputs[K] extends RandomVariableDistribution
+        ? Observable<RandomVariableDistribution>
+        : Inputs[K];
+};
+
 function makeNumberObservable(input: HTMLInputElement): Observable<number> {
   const observable: Observable<number> = fromEvent(input, "input").pipe(
     map((event) => parseFloat((event.target as HTMLInputElement).value)),
@@ -104,26 +119,7 @@ function makeDistributionObservable([
   return observable;
 }
 
-type InputObservables = {
-  [K in keyof Inputs]: Inputs[K] extends number
-    ? Observable<number>
-    : Inputs[K] extends boolean
-      ? Observable<boolean>
-      : Inputs[K] extends RandomVariableDistribution
-        ? Observable<RandomVariableDistribution>
-        : Inputs[K];
-};
-
-function makeGenerator(
-  rootGenerator,
-  distribution: RandomVariableDistribution,
-): fl.RandomGenerator {
-  return randomNormal.source(rootGenerator)(
-    distribution.mean,
-    distribution.stdDev,
-  );
-}
-
+// Make a new scenario. We usually make two of these, although could make more.
 function makeScenario(
   idNumber: number,
   axisLimitsSubject: BehaviorSubject<MinMaxObject>,
@@ -210,7 +206,7 @@ function makeScenario(
         ]) => {
           const samples: Array<Array<fl.FinancialSituation>> = [];
 
-          const rootGenerator = randomLcg(seed);
+          const rootGenerator = makeRootGenerator(seed);
           for (let i = 0; i < numSamples; i++) {
             const inflationGen = makeGenerator(rootGenerator, inflationDist);
             const stockAppreciationRateGen = makeGenerator(
@@ -275,6 +271,7 @@ function makeScenario(
 
   createFinalSummary(summaryValueSpans, summaries$, obs.correctInflation);
 
+  // Add the inputs of this scenario to the allInputsSubject, that is used to update the URL.
   let currentAllInputs: InputsById;
   allInputsSubject.subscribe({
     next: (inputs: InputsById) => {
@@ -294,40 +291,46 @@ function makeScenario(
   });
 }
 
-// Only used for making sure all plots have the same axis limits.
-const axisLimitsSubject = new BehaviorSubject<MinMaxObject>({
-  minY: {},
-  maxY: {},
-  minX: {},
-  maxX: {},
-});
-
-const allInputsSubject = new BehaviorSubject<InputsById>({});
-
-function decodeInputsFromUrl(): InputsById {
-  const urlParams = new URLSearchParams(window.location.search);
-  const encodedString = urlParams.get("inputs");
-  if (encodedString) {
-    const jsonString = decodeURIComponent(encodedString);
-    return JSON.parse(jsonString);
-  }
-  return DEFAULT_INPUTS_BY_ID;
-}
-
-const inputsFromUrl = decodeInputsFromUrl();
-
-Object.entries(inputsFromUrl).forEach(([id, inputs]) => {
-  makeScenario(parseInt(id), axisLimitsSubject, allInputsSubject, inputs);
-});
-
-allInputsSubject.subscribe((allInputs) => {
-  const jsonString = JSON.stringify(allInputs);
-  const encodedString = encodeURIComponent(jsonString);
-  const newUrl = `${window.location.pathname}?inputs=${encodedString}`;
-  window.history.replaceState(null, "", newUrl);
-});
-
+// The main function that sets everything up.
 document.addEventListener("DOMContentLoaded", () => {
+  // Only used for making sure all plots have the same axis limits.
+  const axisLimitsSubject = new BehaviorSubject<MinMaxObject>({
+    minY: {},
+    maxY: {},
+    minX: {},
+    maxX: {},
+  });
+
+  // Used for keeping track of all input values from all scenarios, and setting
+  // them in the URL.
+  const allInputsSubject = new BehaviorSubject<InputsById>({});
+
+  function decodeInputsFromUrl(): InputsById {
+    const urlParams = new URLSearchParams(window.location.search);
+    const encodedString = urlParams.get("inputs");
+    if (encodedString) {
+      const jsonString = decodeURIComponent(encodedString);
+      return JSON.parse(jsonString);
+    }
+    return DEFAULT_INPUTS_BY_ID;
+  }
+
+  // Read the inputs from the URL, if any. Otherwise use hardcoded defaults. Then
+  // create the scenarios set in that data.
+  const inputsFromUrl = decodeInputsFromUrl();
+  Object.entries(inputsFromUrl).forEach(([id, inputs]) => {
+    makeScenario(parseInt(id), axisLimitsSubject, allInputsSubject, inputs);
+  });
+
+  // Write all inputs to the URL.
+  allInputsSubject.subscribe((allInputs) => {
+    const jsonString = JSON.stringify(allInputs);
+    const encodedString = encodeURIComponent(jsonString);
+    const newUrl = `${window.location.pathname}?inputs=${encodedString}`;
+    window.history.replaceState(null, "", newUrl);
+  });
+
+  // Make the "What is this thing?" button and box work.
   const modal = document.getElementById("modal") as HTMLElement;
   const btn = document.getElementById("info-button") as HTMLElement;
   const span = document.getElementsByClassName("close")[0] as HTMLElement;

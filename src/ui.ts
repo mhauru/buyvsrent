@@ -1,3 +1,5 @@
+import { RandomVariableDistribution } from "./random_variables";
+
 export type Inputs = {
   isBuying: boolean;
   housePrice: number;
@@ -38,6 +40,22 @@ type InputConfig = {
   increment: number | string;
   label: string;
   tooltip: string | null;
+};
+export type SummaryValueSpans = {
+  salary: HTMLSpanElement;
+  houseValue: HTMLSpanElement;
+  stockIsaValue: HTMLSpanElement;
+  stockNonIsaValue: HTMLSpanElement;
+  rent: HTMLSpanElement;
+  wealth: HTMLSpanElement;
+};
+
+type VisibilityCondition = "onlyIfBuying" | "onlyIfRenting" | "always";
+
+type GroupConfig = {
+  inputs: (keyof Inputs)[];
+  label: string;
+  visibleWhen: VisibilityCondition;
 };
 
 const inputConfigs: InputConfig[] = [
@@ -251,14 +269,6 @@ const inputConfigs: InputConfig[] = [
   },
 ];
 
-type VisibilityCondition = "onlyIfBuying" | "onlyIfRenting" | "always";
-
-type GroupConfig = {
-  inputs: (keyof Inputs)[];
-  label: string;
-  visibleWhen: VisibilityCondition;
-};
-
 const groupConfigs: GroupConfig[] = [
   {
     inputs: ["isBuying", "cash", "salary"],
@@ -397,11 +407,6 @@ function createInputDiv(
   return [[inputElement], div];
 }
 
-export type RandomVariableDistribution = {
-  mean: number;
-  stdDev: number;
-};
-
 function createRandomVariableInputDiv(
   id: string,
   idSuffix: number,
@@ -497,15 +502,6 @@ function addSummaryEntry(
   parentDiv.appendChild(div);
   return valueSpan;
 }
-
-export type SummaryValueSpans = {
-  salary: HTMLSpanElement;
-  houseValue: HTMLSpanElement;
-  stockIsaValue: HTMLSpanElement;
-  stockNonIsaValue: HTMLSpanElement;
-  rent: HTMLSpanElement;
-  wealth: HTMLSpanElement;
-};
 
 function createSummaryDiv(): [HTMLDivElement, SummaryValueSpans] {
   const div = document.createElement("div");

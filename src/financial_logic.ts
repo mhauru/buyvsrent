@@ -1,9 +1,9 @@
+import { RandomGenerator } from "./random_variables";
+
 const ISA_MAX_CONTRIBUTION = 20_000;
 const CAPITAL_GAINS_ALLOWANCE = 3_000;
 // TODO This only holds if you are in one of the >50k income tax brackets.
 const CAPITAL_GAINS_RATE = 20;
-
-export type RandomGenerator = () => number;
 
 export type FinancialSituation = {
   houseValue: number;
