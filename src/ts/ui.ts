@@ -103,7 +103,7 @@ const inputConfigs: InputConfig[] = [
     increment: 0.1,
     label: "Salary growth (%) over inflation, annual",
     tooltip:
-      "Annual salary growth, on top of inflation. Assumed to be a normal distributed random variable with th given mean and standard deviation. This one is tricky to estimate, because one may for instance change careers. I have no good basis for the default values I've chosen here.",
+      "Annual salary growth, on top of inflation. Assumed to be a normal distributed random variable with the given mean and standard deviation. This one is tricky to estimate, because one may for instance change careers. I have no good basis for the default values I've chosen here.",
   },
   {
     id: "rent",
@@ -111,7 +111,7 @@ const inputConfigs: InputConfig[] = [
     increment: 100,
     label: "Monthly rent",
     tooltip:
-      "To make the comparison fair between renting and buying, you should make this be the rent you would need to pay for a similar home as the one you would pay. In London, for instance, 4.5% of house price as annual rent is a good starting point. It will grow over time the same way house prices grow.",
+      "To make the comparison fair between renting and buying, you should make this be the rent you would need to pay for a similar home as the one you would buy. In London, for instance, 4.5% of house price as annual rent is a good starting point. It will grow over time the same way house prices grow.",
   },
   {
     id: "rentGrowth",
@@ -119,7 +119,7 @@ const inputConfigs: InputConfig[] = [
     increment: 0.1,
     label: "Rent growth (%) over house price growth, annual",
     tooltip:
-      "Annual rent increase, on top of house price increase. Assumed to be a normal distributed random variable with th given mean and standard deviation. Note that usually rents rise with house prices, which is why the mean is zero. I haven't found a good source for the standard deviation, so I just guessed something for the default.",
+      "Annual rent increase, on top of house price increase. Assumed to be a normal distributed random variable with the given mean and standard deviation. Note that usually rents rise with house prices, which is why the mean is zero. I haven't found a good source for the standard deviation, so I just guessed something for the default.",
   },
   {
     id: "mortgageStage1Length",
@@ -180,7 +180,7 @@ const inputConfigs: InputConfig[] = [
     increment: 0.1,
     label: "Stocks value growth (%) over inflation, annual",
     tooltip:
-      "Annual appreciation of the stock portfolio, on top of inflation. Assumed to be a normal distributed random variable with th given mean and standard deviation. The default values are for annual growth over inflation for the S&P 500 index 1989-2023.",
+      "Annual appreciation of the stock portfolio, on top of inflation. Assumed to be a normal distributed random variable with the given mean and standard deviation. The default values are for annual growth over inflation for the S&P 500 index 1989-2023.",
   },
   {
     id: "houseAppreciationRate",
@@ -188,7 +188,7 @@ const inputConfigs: InputConfig[] = [
     increment: 0.1,
     label: "House price growth (%) over inflation, annual",
     tooltip:
-      "Annual appreciation of the value of your house, on top of inflation. Assumed to be a normal distributed random variable with th given mean and standard deviation. The default values are for annual growth over inflation for the average London house price 1989-2023. Note that the standard deviation is likely a severe underestimate, given that it's the variation in the average home price. The price of a single home can vary much more, and you own a single home, not a market average.",
+      "Annual appreciation of the value of your house, on top of inflation. Assumed to be a normal distributed random variable with the given mean and standard deviation. The default values are for annual growth over inflation for the average London house price 1989-2023. Note that the standard deviation is likely a severe underestimate, given that it's the variation in the average home price. The price of a single home can vary much more, and you own a single home, not a market average.",
   },
   {
     id: "yearsToForecast",
