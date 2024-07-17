@@ -17,7 +17,7 @@ const DEFAULT_INPUTS: Inputs = {
   housePrice: 500_000,
   cash: 110_000,
   mortgage: 400_000,
-  salary: 3_800,
+  salary: 5_400,
   salaryGrowth: { mean: 2, stdDev: 3 },
   // The average gross rental yield, i.e. annual rent divided by house price, is around
   // 4.5% in London.
