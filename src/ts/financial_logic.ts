@@ -193,7 +193,7 @@ export function getNextFinancialSituation(
   const salaryGrowth = inflation + salaryGrowthGen();
   const stockAppreciationRate = inflation + stockAppreciationRateGen();
   const houseAppreciationRate = inflation + houseAppreciationRateGen();
-  const rentGrowth = inflation + rentGrowthGen();
+  const rentGrowth = houseAppreciationRate + rentGrowthGen();
   // Expenses and income
   getSalary(nextFS);
   payMortgage(nextFS, mortgageMonthlyPayment, mortgageInterestRate);
