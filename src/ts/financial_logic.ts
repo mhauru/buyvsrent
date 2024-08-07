@@ -103,6 +103,31 @@ function investSurplusCashInStocks(fs: FinancialSituation) {
   fs.stockNonIsaValuePaid += nonIsaInvestment;
 }
 
+function liquidateStocks(fs: FinancialSituation) {
+  // First try to sell enough from non-ISA to cover the cash needs, and get the
+  // cash balance to be positive again.
+  const nonIsaToSell = Math.min(fs.stockNonIsaValue, -fs.cashValue);
+  const fractionNonIsaToSell = nonIsaToSell / fs.stockNonIsaValue;
+  const deduction = fs.stockNonIsaValuePaid * fractionNonIsaToSell;
+  const gain = nonIsaToSell - deduction;
+  // TODO We do a silly thing here, where we plan to sell enough stock to cover
+  // our cash needs without accounting for capital gains tax. Once you _do_
+  // account for it, your cash balance ends up a bit in the negative still.
+  // This isn't trivial to fix though, and I'm lazy to do though, because I
+  // suspect this won't happen much.
+  const tax =
+    (Math.max(gain - CAPITAL_GAINS_ALLOWANCE, 0) * CAPITAL_GAINS_RATE) / 100;
+  fs.cashValue += nonIsaToSell;
+  fs.cashValue -= tax;
+  fs.stockNonIsaValue -= nonIsaToSell;
+  fs.stockNonIsaValuePaid -= deduction;
+
+  // Then sell from ISA if necessary.
+  const isaToSell = Math.min(fs.stockIsaValue, -fs.cashValue);
+  fs.cashValue += isaToSell;
+  fs.stockIsaValue -= isaToSell;
+}
+
 function computeStampDuty(housePrice: number, firstTimeBuyer: boolean): number {
   const thresholds = [
     0,
@@ -166,7 +191,9 @@ function goBankrupt(fs: FinancialSituation) {
 }
 
 function checkFinancialSituation(fs: FinancialSituation) {
-  if (fs.cashValue < 0) {
+  // -1, because we want to allow a bit of rounding error. If you go -1 unit
+  // of money in the negative, just borrow from your mum or something.
+  if (fs.cashValue < -1) {
     goBankrupt(fs);
   }
 }
@@ -213,6 +240,10 @@ export function getNextFinancialSituation(
   // What to do with any money left over.
   if (mortgageOverpay) overpayMortgage(nextFS);
   investSurplusCashInStocks(nextFS);
+  // What to do if out of cash.
+  if (nextFS.cashValue < 0) {
+    liquidateStocks(nextFS);
+  }
   // Clean-up
   checkFinancialSituation(nextFS);
   nextFS.cumulativeInflation *= 1 + inflation / 100;
