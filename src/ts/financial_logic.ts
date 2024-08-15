@@ -25,15 +25,15 @@ function appreciateHouseValue(
   fs: FinancialSituation,
   houseAppreciationRate: number,
 ) {
-  fs.houseValue *= 1 + houseAppreciationRate / 100.0;
+  fs.houseValue *= houseAppreciationRate;
 }
 
 function appreciateStockValue(
   fs: FinancialSituation,
   stockAppreciationRate: number,
 ) {
-  fs.stockIsaValue *= 1 + stockAppreciationRate / 100.0;
-  fs.stockNonIsaValue *= 1 + stockAppreciationRate / 100.0;
+  fs.stockIsaValue *= stockAppreciationRate;
+  fs.stockNonIsaValue *= stockAppreciationRate;
 }
 
 function getSalary(fs: FinancialSituation) {
@@ -41,7 +41,7 @@ function getSalary(fs: FinancialSituation) {
 }
 
 function getPayRaise(fs: FinancialSituation, salaryGrowth: number) {
-  fs.salary *= 1 + salaryGrowth / 100;
+  fs.salary *= salaryGrowth;
 }
 
 function payRent(fs: FinancialSituation) {
@@ -51,7 +51,7 @@ function payRent(fs: FinancialSituation) {
 }
 
 function raiseRent(fs: FinancialSituation, rentGrowth: number) {
-  fs.rent *= 1 + rentGrowth / 100;
+  fs.rent *= rentGrowth;
 }
 
 function payMortgage(
@@ -217,10 +217,10 @@ export function getNextFinancialSituation(
   const nextFS = { ...fs };
   // Generate random values for this year
   const inflation = inflationGen();
-  const salaryGrowth = inflation + salaryGrowthGen();
-  const stockAppreciationRate = inflation + stockAppreciationRateGen();
-  const houseAppreciationRate = inflation + houseAppreciationRateGen();
-  const rentGrowth = houseAppreciationRate + rentGrowthGen();
+  const salaryGrowth = inflation * salaryGrowthGen();
+  const stockAppreciationRate = inflation * stockAppreciationRateGen();
+  const houseAppreciationRate = inflation * houseAppreciationRateGen();
+  const rentGrowth = houseAppreciationRate * rentGrowthGen();
   // Expenses and income
   getSalary(nextFS);
   payMortgage(nextFS, mortgageMonthlyPayment, mortgageInterestRate);
@@ -246,7 +246,7 @@ export function getNextFinancialSituation(
   }
   // Clean-up
   checkFinancialSituation(nextFS);
-  nextFS.cumulativeInflation *= 1 + inflation / 100;
+  nextFS.cumulativeInflation *= inflation;
   nextFS.yearNumber += 1;
   return nextFS;
 }

@@ -1,5 +1,5 @@
 // Generating random numbers and parametrising their distributions.
-import { randomLcg, randomNormal } from "d3-random";
+import { randomLcg, randomLogNormal } from "d3-random";
 
 export type RandomGenerator = () => number;
 
@@ -16,8 +16,8 @@ export function makeGenerator(
   rootGenerator: RandomGenerator,
   distribution: RandomVariableDistribution,
 ): RandomGenerator {
-  return randomNormal.source(rootGenerator)(
-    distribution.mean,
-    distribution.stdDev,
+  return randomLogNormal.source(rootGenerator)(
+    distribution.mean / 100,
+    distribution.stdDev / 100,
   );
 }
