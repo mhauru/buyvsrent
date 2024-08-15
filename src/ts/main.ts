@@ -33,15 +33,15 @@ const DEFAULT_INPUTS: Inputs = {
   mortgageOverpay: false,
   // These are the mean and standard deviation of UK annual CPI 1989-2023.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23
-  inflation: { mean: 2.8, stdDev: 2.1 },
+  inflation: { mean: 2.7, stdDev: 3.7 },
   // These values are for annual growth over inflation for the average London house price 1989-2023.
   // Source: https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/housepriceindex/latest
   // Note that the standard deviation is for the year-to-year variation in the growth of the price
   // of the average home. The standard deviation for a _single_ home is likely far higher.
-  houseAppreciationRate: { mean: 3.6, stdDev: 8.9 },
+  houseAppreciationRate: { mean: 4.2, stdDev: 4.1 },
   // These values are for annual growth over inflation for the S&P 500 index 1989-2023.
   // Source: https://www.macrotrends.net/2324/sp-500-historical-chart-data
-  stockAppreciationRate: { mean: 7.1, stdDev: 17.4 },
+  stockAppreciationRate: { mean: 5.1, stdDev: 16.9 },
   // This is rent growth over house price growth. The mean is zero because we
   // assume that by default the two are coupled. The standard deviation is an unjustified guess.
   rentGrowth: { mean: 0, stdDev: 3 },
