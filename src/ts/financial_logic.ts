@@ -107,7 +107,8 @@ function liquidateStocks(fs: FinancialSituation) {
   // First try to sell enough from non-ISA to cover the cash needs, and get the
   // cash balance to be positive again.
   const nonIsaToSell = Math.min(fs.stockNonIsaValue, -fs.cashValue);
-  const fractionNonIsaToSell = nonIsaToSell / fs.stockNonIsaValue;
+  const fractionNonIsaToSell =
+    fs.stockNonIsaValue > 0 ? nonIsaToSell / fs.stockNonIsaValue : 0;
   const deduction = fs.stockNonIsaValuePaid * fractionNonIsaToSell;
   const gain = nonIsaToSell - deduction;
   // TODO We do a silly thing here, where we plan to sell enough stock to cover
