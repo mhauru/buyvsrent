@@ -224,15 +224,18 @@ export function getNextFinancialSituation(
   const rentGrowth = houseAppreciationRate * rentGrowthGen();
   // Expenses and income
   getSalary(nextFS);
-  payMortgage(nextFS, mortgageMonthlyPayment, mortgageInterestRate);
-  payRunningHouseCosts(
-    nextFS,
-    maintenanceRate,
-    groundRent,
-    serviceChargeRate,
-    homeInsurance,
-  );
-  if (!isBuying) payRent(nextFS);
+  if (isBuying) {
+    payMortgage(nextFS, mortgageMonthlyPayment, mortgageInterestRate);
+    payRunningHouseCosts(
+      nextFS,
+      maintenanceRate,
+      groundRent,
+      serviceChargeRate,
+      homeInsurance,
+    );
+  } else {
+    payRent(nextFS);
+  }
   // Changes
   appreciateHouseValue(nextFS, houseAppreciationRate);
   appreciateStockValue(nextFS, stockAppreciationRate);
