@@ -216,12 +216,6 @@ export function getNextFinancialSituation(
   maintenanceRate: number,
 ): FinancialSituation {
   const nextFS = { ...fs };
-  // Generate random values for this year
-  const inflation = inflationGen();
-  const salaryGrowth = inflation * salaryGrowthGen();
-  const stockAppreciationRate = inflation * stockAppreciationRateGen();
-  const houseAppreciationRate = inflation * houseAppreciationRateGen();
-  const rentGrowth = houseAppreciationRate * rentGrowthGen();
   // Expenses and income
   getSalary(nextFS);
   if (isBuying) {
@@ -236,11 +230,6 @@ export function getNextFinancialSituation(
   } else {
     payRent(nextFS);
   }
-  // Changes
-  appreciateHouseValue(nextFS, houseAppreciationRate);
-  appreciateStockValue(nextFS, stockAppreciationRate);
-  getPayRaise(nextFS, salaryGrowth);
-  raiseRent(nextFS, rentGrowth);
   // What to do with any money left over.
   if (mortgageOverpay) overpayMortgage(nextFS);
   investSurplusCashInStocks(nextFS);
@@ -248,6 +237,17 @@ export function getNextFinancialSituation(
   if (nextFS.cashValue < 0) {
     liquidateStocks(nextFS);
   }
+  // Generate random values for this year
+  const inflation = inflationGen();
+  const salaryGrowth = inflation * salaryGrowthGen();
+  const stockAppreciationRate = inflation * stockAppreciationRateGen();
+  const houseAppreciationRate = inflation * houseAppreciationRateGen();
+  const rentGrowth = houseAppreciationRate * rentGrowthGen();
+  // Changes
+  appreciateHouseValue(nextFS, houseAppreciationRate);
+  appreciateStockValue(nextFS, stockAppreciationRate);
+  getPayRaise(nextFS, salaryGrowth);
+  raiseRent(nextFS, rentGrowth);
   // Clean-up
   checkFinancialSituation(nextFS);
   nextFS.cumulativeInflation *= inflation;
