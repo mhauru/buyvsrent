@@ -1,6 +1,6 @@
 // The main module.
 import { fromEvent, Observable, combineLatest, BehaviorSubject } from "rxjs";
-import { map, startWith } from "rxjs/operators";
+import { map, shareReplay, startWith } from "rxjs/operators";
 
 import * as fl from "./financial_logic";
 import { Inputs, InputElements, createInputElements } from "./ui";
@@ -263,6 +263,7 @@ function makeScenario(
           return samples;
         },
       ),
+      shareReplay(1),
     );
 
   createPlot(
