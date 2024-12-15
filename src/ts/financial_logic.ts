@@ -130,9 +130,10 @@ function liquidateStocks(fs: FinancialSituation) {
 }
 
 function computeStampDuty(housePrice: number, firstTimeBuyer: boolean): number {
+  const firstTimeBuyerApplies = firstTimeBuyer && housePrice <= 625_000;
   const thresholds = [
     0,
-    firstTimeBuyer ? 425_000 : 250_000,
+    firstTimeBuyerApplies ? 425_000 : 250_000,
     925_000,
     1_500_000,
     Infinity,
